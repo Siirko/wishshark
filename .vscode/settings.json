@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.yml": "jinja-yaml",
+        "show.h": "c",
+        "ip.h": "c"
+    },
+}

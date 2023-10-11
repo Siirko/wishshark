@@ -28,8 +28,7 @@ void eprintf(const char *msg, const char *file, int line)
     fprintf(stderr, ANSI_RESET);
 }
 
-noreturn void chprintf(int syserr, const char *file, int line, const char *info,
-                       const char *msg, ...)
+noreturn void chprintf(int syserr, const char *file, int line, const char *info, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
@@ -47,4 +46,19 @@ noreturn void chprintf(int syserr, const char *file, int line, const char *info,
     }
     fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
+}
+
+void spprintf(const char *format, int spaces, int wtab, ...)
+{
+    va_list args;
+    va_start(args, wtab);
+    for (int i = 0; i < spaces * wtab; i++)
+    {
+        if (i == 0)
+            printf("├─");
+        else
+            printf("─");
+    }
+    vprintf(format, args);
+    va_end(args);
 }

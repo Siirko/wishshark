@@ -1,8 +1,7 @@
 #include "../include/cprintf.h"
-#include "../include/ethernet.h"
-#include "../include/ip.h"
-#include "../include/tcp.h"
+#include "../include/show.h"
 #include <arpa/inet.h>
+#include <net/ethernet.h>
 #include <pcap.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,8 +20,7 @@ char *get_dev(bpf_u_int32 *net, bpf_u_int32 *mask)
     }
     if (pcap_lookupnet(dev, net, mask, errbuf) == -1)
     {
-        fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev,
-                errbuf);
+        fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
         exit(EXIT_FAILURE);
     }
     deprintf("Net -> %s\n", inet_ntoa(*(struct in_addr *)net));
@@ -50,17 +48,21 @@ void apply_filter(char *filter_exp, pcap_t *handler, bpf_u_int32 net)
     struct bpf_program fp;
     if (pcap_compile(handler, &fp, filter_exp, 0, net) == -1)
     {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp,
-                pcap_geterr(handler));
+        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handler));
         exit(EXIT_FAILURE);
     }
     if (pcap_setfilter(handler, &fp) == -1)
     {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp,
-                pcap_geterr(handler));
+        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handler));
         exit(EXIT_FAILURE);
     }
     deprintf("Filter -> %s\n", filter_exp);
+}
+
+void packet_handler_callback(u_char *args, const struct pcap_pkthdr *packet_header, const u_char *packet_body)
+{
+    struct ether_header *ethernet_header = (struct ether_header *)packet_body;
+    s_ethernet_packet(packet_body, packet_header, 0);
 }
 
 int main(void)
@@ -73,10 +75,8 @@ int main(void)
     char *dev = get_dev(&net, &mask);
     pcap_t *handle = get_handler(dev);
 
-    apply_filter(filter_exp, handle, net);
-    packet = pcap_next(handle, &header);
+    pcap_loop(handle, -1, packet_handler_callback, NULL);
 
     pcap_close(handle);
-    printf("packet: %s\n", packet);
     return 0;
 }
