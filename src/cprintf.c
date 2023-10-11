@@ -48,14 +48,20 @@ noreturn void chprintf(int syserr, const char *file, int line, const char *info,
     exit(EXIT_FAILURE);
 }
 
-void spprintf(const char *format, int spaces, int wtab, ...)
+void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ...)
 {
     va_list args;
     va_start(args, wtab);
+    if (start)
+        for (int i = 0; i < spaces * wtab; i++)
+            printf(" ");
     for (int i = 0; i < spaces * wtab; i++)
     {
         if (i == 0)
-            printf("├─");
+            if (end)
+                printf("└─");
+            else
+                printf("├─");
         else
             printf("─");
     }

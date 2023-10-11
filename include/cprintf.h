@@ -58,4 +58,4 @@ void eprintf(const char *msg, const char *file, int line);
  */
 void chprintf(int syserr, const char *file, int line, const char *info, const char *msg, ...);
 
-void spprintf(const char *format, int spaces, int wtab, ...);
+void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ...);

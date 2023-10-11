@@ -32,13 +32,13 @@ const char *IP_PROT_MAP[146] = {[0] = "HOPOPT",       [1] = "ICMP",
 void s_ethernet_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
 {
     // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
-    spprintf(BBLU "\n\nEthernet\n" CRESET, __tabs, 0);
+    spprintf(false, false, BBLU "\n\nEthernet\n" CRESET, __tabs, 0);
     struct ether_header *ethernet_header = (struct ether_header *)packet;
-    spprintf(" Destination MAC Address: %s\n", __tabs + 1, 1,
+    spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
              ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
-    spprintf(" Source MAC Address: %s\n", __tabs + 1, 1, ether_ntoa((struct ether_addr *)ethernet_header->ether_shost),
-             __tabs + 1);
-    spprintf(" Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+    spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
+             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
+    spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
     switch (ntohs(ethernet_header->ether_type))
     {
     case ETHERTYPE_IP:
@@ -53,23 +53,24 @@ void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header, int __t
 {
     // https://en.wikipedia.org/wiki/Internet_Protocol_version_4#Packet_structure
     struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
-    spprintf(BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(" IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
+    spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
     // According to wikipedia ToS = DSCP but this seems to be blurry
-    spprintf(" ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
+    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
     // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
-    spprintf(" ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
-    spprintf(" Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
-    spprintf(" ID: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
-    spprintf(" Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
-    spprintf(" Fragment Offset -> %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
-    spprintf(" TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
-    spprintf(" Protocol: %s\n", __tabs + 2, __tabs + 2,
+    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
+    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
+    spprintf(true, false, " ID: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
+    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
+    spprintf(true, false, " Fragment Offset -> %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
+    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
+    spprintf(true, false, " Protocol: %s\n", __tabs + 2, __tabs + 2,
              IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
-    spprintf(" Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
-    spprintf(" Destination Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_dst));
+    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
+    spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
+             inet_ntoa(ip_header->ip_dst));
     if (ip_header->ip_hl > 5)
-        spprintf("Options: %s\n", __tabs + 2, __tabs + 2,
+        spprintf(true, false, " Options: %s\n", __tabs + 2, __tabs + 2,
                  (char *)(packet + sizeof(struct ether_header) + sizeof(struct ip)));
 
     // switch (ip_header->ip_p)
