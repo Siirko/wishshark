@@ -1,4 +1,7 @@
 #include "../include/cprintf.h"
+#include "../include/ethernet.h"
+#include "../include/ip.h"
+#include "../include/tcp.h"
 #include <arpa/inet.h>
 #include <pcap.h>
 #include <stdio.h>
