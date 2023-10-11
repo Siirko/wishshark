@@ -73,18 +73,33 @@ void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header, int __t
         spprintf(true, false, " Options: %s\n", __tabs + 2, __tabs + 2,
                  (char *)(packet + sizeof(struct ether_header) + sizeof(struct ip)));
 
-    // switch (ip_header->ip_p)
-    // {
-    // case IPPROTO_TCP:
-    //     s_tcp_packet(packet, header);
-    //     break;
-    // case IPPROTO_UDP:
-    //     s_udp_packet(packet, header);
-    //     break;
+    switch (ip_header->ip_p)
+    {
+    case IPPROTO_TCP:
+        s_tcp_packet(packet, header, __tabs + 1);
+        break;
+    case IPPROTO_UDP:
+        s_udp_packet(packet, header, __tabs + 1);
+        break;
     // case IPPROTO_ICMP:
     //     s_icmp_packet(packet, header);
     //     break;
-    // default:
-    //     break;
-    // }
+    default:
+        break;
+    }
+}
+
+void s_tcp_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+{
+    // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
+    struct tcphdr *tcp_header = (struct tcphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+    spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
+    spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
+    // TODO
+}
+
+void s_udp_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+{
+    // TODO
 }
