@@ -58,6 +58,8 @@ void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header,
     // https://en.wikipedia.org/wiki/Internet_Protocol_version_4#Packet_structure
     struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
     spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2,
+             ip_header->ip_v);
     spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2,
              ip_header->ip_hl);
     // According to wikipedia ToS = DSCP but this seems to be blurry
@@ -72,7 +74,7 @@ void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header,
              ntohs(ip_header->ip_id));
     spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2,
              ntohs(ip_header->ip_off) & IP_OFFMASK);
-    spprintf(true, false, " Fragment Offset -> %d\n", __tabs + 2, __tabs + 2,
+    spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2,
              ntohs(ip_header->ip_off));
     spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2,
              ip_header->ip_ttl);
@@ -118,7 +120,7 @@ void s_tcp_packet(const u_char *packet, const struct pcap_pkthdr *header,
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2,
              ntohs(tcp_header->dest));
     spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2,
-             ntohl(tcp_header->seq));
+             ntohs(tcp_header->seq));
 }
 
 void s_udp_packet(const u_char *packet, const struct pcap_pkthdr *header,
