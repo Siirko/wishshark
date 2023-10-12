@@ -2,6 +2,7 @@
     "files.associations": {
         "*.yml": "jinja-yaml",
         "show.h": "c",
-        "ip.h": "c"
+        "ip.h": "c",
+        "cprintf.h": "c"
     },
 }

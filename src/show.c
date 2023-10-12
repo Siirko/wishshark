@@ -29,7 +29,8 @@ const char *IP_PROT_MAP[146] = {[0] = "HOPOPT",       [1] = "ICMP",
                                 [98] = "ENCAP",       [124] = "IS-IS over IPv4",
                                 [143] = "Ethernet"};
 
-void s_ethernet_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+void s_ethernet_packet(const u_char *packet, const struct pcap_pkthdr *header,
+                       int __tabs)
 {
     // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
     spprintf(false, false, BBLU "\n\nEthernet\n" CRESET, __tabs, 0);
@@ -37,8 +38,10 @@ void s_ethernet_packet(const u_char *packet, const struct pcap_pkthdr *header, i
     spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
              ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
     spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
-             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
-    spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost),
+             __tabs + 1);
+    spprintf(false, true, " Type: %d\n", __tabs + 1, 1,
+             ntohs(ethernet_header->ether_type));
     switch (ntohs(ethernet_header->ether_type))
     {
     case ETHERTYPE_IP:
@@ -49,29 +52,42 @@ void s_ethernet_packet(const u_char *packet, const struct pcap_pkthdr *header, i
     }
 }
 
-void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header,
+                 int __tabs)
 {
     // https://en.wikipedia.org/wiki/Internet_Protocol_version_4#Packet_structure
     struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
     spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
+    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2,
+             ip_header->ip_hl);
     // According to wikipedia ToS = DSCP but this seems to be blurry
-    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
+    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2,
+             ip_header->ip_tos);
     // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
-    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
-    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
-    spprintf(true, false, " ID: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
-    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
-    spprintf(true, false, " Fragment Offset -> %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
-    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
+    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2,
+             IPTOS_ECN(ip_header->ip_tos));
+    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2,
+             ntohs(ip_header->ip_len));
+    spprintf(true, false, " ID: %d\n", __tabs + 2, __tabs + 2,
+             ntohs(ip_header->ip_id));
+    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2,
+             ntohs(ip_header->ip_off) & IP_OFFMASK);
+    spprintf(true, false, " Fragment Offset -> %d\n", __tabs + 2, __tabs + 2,
+             ntohs(ip_header->ip_off));
+    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2,
+             ip_header->ip_ttl);
     spprintf(true, false, " Protocol: %s\n", __tabs + 2, __tabs + 2,
-             IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
-    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
-    spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
+             IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p]
+                                          : "Unknown");
+    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2,
+             inet_ntoa(ip_header->ip_src));
+    spprintf(true, ip_header->ip_hl > 5 ? false : true,
+             " Destination Address: %s\n", __tabs + 2, __tabs + 2,
              inet_ntoa(ip_header->ip_dst));
     if (ip_header->ip_hl > 5)
-        spprintf(true, false, " Options: %s\n", __tabs + 2, __tabs + 2,
-                 (char *)(packet + sizeof(struct ether_header) + sizeof(struct ip)));
+        spprintf(
+            true, false, " Options: %s\n", __tabs + 2, __tabs + 2,
+            (char *)(packet + sizeof(struct ether_header) + sizeof(struct ip)));
 
     switch (ip_header->ip_p)
     {
@@ -89,17 +105,24 @@ void s_ip_packet(const u_char *packet, const struct pcap_pkthdr *header, int __t
     }
 }
 
-void s_tcp_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+void s_tcp_packet(const u_char *packet, const struct pcap_pkthdr *header,
+                  int __tabs)
 {
     // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
-    struct tcphdr *tcp_header = (struct tcphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+    struct tcphdr *tcp_header =
+        (struct tcphdr *)(packet + sizeof(struct ether_header) +
+                          sizeof(struct ip));
     spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
-    spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
-    // TODO
+    spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2,
+             ntohs(tcp_header->source));
+    spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2,
+             ntohs(tcp_header->dest));
+    spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2,
+             ntohl(tcp_header->seq));
 }
 
-void s_udp_packet(const u_char *packet, const struct pcap_pkthdr *header, int __tabs)
+void s_udp_packet(const u_char *packet, const struct pcap_pkthdr *header,
+                  int __tabs)
 {
     // TODO
 }
