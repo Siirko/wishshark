@@ -24,7 +24,7 @@ $(BIN_PATH)/$(EXEC): $(OBJECTS)
 
 $(OBJECTS): $(OBJ_PATH)/%.o : $(SRC_PATH)/%.c
 	mkdir -p $(OBJ_PATH)
-	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
+	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH) 
 
 
 .PHONY: clean

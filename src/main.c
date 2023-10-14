@@ -7,15 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
     bpf_u_int32 net, mask = 0;
-    // char filter_exp[] = "port 80";
-    const u_char *packet;
-    struct pcap_pkthdr header;
-
-    char *dev = get_device_name(&net, &mask);
-    pcap_t *handle = open_pcap_handle(dev);
+    (void)argc;
+    /*char *dev =*/get_device_name(&net, &mask);
+    pcap_t *handle = open_pcap_handle_offline(argv[1]);
 
     pcap_loop(handle, -1, packet_handler_callback, NULL);
 

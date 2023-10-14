@@ -3,6 +3,9 @@
         "*.yml": "jinja-yaml",
         "show.h": "c",
         "ip.h": "c",
-        "cprintf.h": "c"
+        "cprintf.h": "c",
+        "udp.h": "c",
+        "inet.h": "c",
+        "stdio.h": "c"
     },
 }
