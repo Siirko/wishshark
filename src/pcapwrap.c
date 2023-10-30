@@ -74,6 +74,8 @@ void packet_handler_callback(u_char *args, const struct pcap_pkthdr *packet_head
     (void)args;
     static int count = 1;
     deprintf("Packet number %d:\n", count++);
-    tshow_t packet = {packet_header, packet_body};
+    struct ether_header *ethernet_header = (struct ether_header *)packet_body;
+    tshow_t packet = {packet_header, packet_body,
+                      (ntohs(ethernet_header->ether_type) == ETHERTYPE_IPV6) ? true : false};
     s_ethernet_packet(packet, 0);
 }

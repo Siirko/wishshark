@@ -9,6 +9,10 @@
         "stdio.h": "c",
         "pcapwrap.h": "c",
         "tcp.h": "c",
-        "ether.h": "c"
+        "ether.h": "c",
+        "ansi_color.h": "c",
+        "ip_icmp.h": "c",
+        "stdlib.h": "c",
+        "ethernet.h": "c"
     },
 }

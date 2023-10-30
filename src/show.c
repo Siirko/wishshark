@@ -66,6 +66,9 @@ void s_ethernet_packet(const tshow_t packet, int __tabs)
     case ETHERTYPE_ARP:
         s_arp_packet(packet, __tabs + 1);
         break;
+    case ETHERTYPE_IPV6:
+        s_ipv6_packet(packet, __tabs + 1);
+        break;
     default:
         break;
     }
@@ -117,11 +120,43 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     }
 }
 
+void s_ipv6_packet(const tshow_t packet, int __tabs)
+{
+    char addrstr[INET6_ADDRSTRLEN];
+    struct ip6_hdr *ip6_header = (struct ip6_hdr *)(packet.packet_body + sizeof(struct ether_header));
+    spprintf(true, true, BBLU " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_vfc >> 4);
+    spprintf(true, false, " Traffic Class: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow >> 20);
+    spprintf(true, false, " Flow Label: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow & 0x000FFFFF);
+    spprintf(true, false, " Payload Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip6_header->ip6_plen));
+    spprintf(true, false, " Next Header: %d (%s)\n", __tabs + 2, __tabs + 2, ip6_header->ip6_nxt,
+             IP_PROT_MAP[ip6_header->ip6_nxt] ? IP_PROT_MAP[ip6_header->ip6_nxt] : "Unknown");
+    spprintf(true, false, " Hop Limit: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_hlim);
+    inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr));
+    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+    inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
+    spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+    switch (ip6_header->ip6_nxt)
+    {
+    case IPPROTO_TCP:
+        s_tcp_packet(packet, __tabs + 1);
+        break;
+    case IPPROTO_UDP:
+        s_udp_packet(packet, __tabs + 1);
+        break;
+    case IPPROTO_ICMPV6:
+        // s_icmpv6_packet(packet, __tabs + 1);
+        break;
+    default:
+        break;
+    }
+}
 void s_tcp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
-    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip));
+    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) +
+                                                  (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
     spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
@@ -132,7 +167,7 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
     spprintf(true, false, " Flags: %d%d%d%d%d%d\n", __tabs + 2, __tabs + 2, tcp_header->urg, tcp_header->ack,
              tcp_header->psh, tcp_header->rst, tcp_header->syn, tcp_header->fin);
     spprintf(true, false, " Window: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->window));
-    spprintf(true, tcp_header->doff > 5 ? false : true, " Checksum: %d\n", __tabs + 2, __tabs + 2,
+    spprintf(true, tcp_header->doff > 5 ? false : true, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2,
              ntohs(tcp_header->check));
     if (tcp_header->urg)
         spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
@@ -142,16 +177,13 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
     }
     if (ntohs(tcp_header->source) == 80 || ntohs(tcp_header->dest) == 80)
         s_http_packet(packet, __tabs + 1);
-    // u_char payload[header->len - (sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr))];
-    // memcpy(payload, packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr),
-    //        header->len - (sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr)));
-    // spprintf(true, false, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
 }
 
 void s_udp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
-    struct udphdr *udp_header = (struct udphdr *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip));
+    struct udphdr *udp_header = (struct udphdr *)(packet_body + sizeof(struct ether_header) +
+                                                  (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
     spprintf(true, true, BBLU " UDP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
@@ -163,7 +195,8 @@ void s_icmp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
-    struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip));
+    struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) +
+                                                     (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
     spprintf(true, true, BBLU " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Type: %d\n", __tabs + 2, __tabs + 2, icmp_header->type);
     spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
@@ -230,7 +263,8 @@ size_t tcp_payload_len(const tshow_t packet)
 {
     const u_char *packet_body = packet.packet_body;
     struct ip *ip_header = (struct ip *)(packet_body + sizeof(struct ether_header));
-    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip));
+    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) +
+                                                  (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
     size_t ethernet_header_length = sizeof(struct ether_header);
     size_t ip_header_length = ip_header->ip_hl * 4;
     size_t tcp_header_length = tcp_header->doff * 4;
@@ -241,14 +275,15 @@ size_t tcp_payload_len(const tshow_t packet)
 void s_http_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
-    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip));
+    struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) +
+                                                  (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
     size_t tcp_payload_size = tcp_payload_len(packet);
     if (tcp_payload_size > 0)
     {
         spprintf(true, true, BBLU " HTTP\n" CRESET, __tabs + 1, __tabs + 2);
         spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
         spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
-        u_char *payload[tcp_payload_size + 15];
+        u_char *payload[tcp_payload_size];
         memcpy(payload, packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr),
                tcp_payload_size);
         payload[tcp_payload_size] = '\0';
