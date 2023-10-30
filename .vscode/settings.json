@@ -6,6 +6,9 @@
         "cprintf.h": "c",
         "udp.h": "c",
         "inet.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "pcapwrap.h": "c",
+        "tcp.h": "c",
+        "ether.h": "c"
     },
 }

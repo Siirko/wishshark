@@ -71,9 +71,9 @@ void apply_filter(char *filter_exp, pcap_t *handler, bpf_u_int32 net)
 
 void packet_handler_callback(u_char *args, const struct pcap_pkthdr *packet_header, const u_char *packet_body)
 {
-    // struct ether_header *ethernet_header = (struct ether_header
-    // *)packet_body;
     (void)args;
-    (void)packet_header;
-    s_ethernet_packet(packet_body, 0);
+    static int count = 1;
+    deprintf("Packet number %d:\n", count++);
+    tshow_t packet = {packet_header, packet_body};
+    s_ethernet_packet(packet, 0);
 }
