@@ -35,3 +35,5 @@ void s_icmp_packet(const tshow_t packet, int __tabs);
 void s_arp_packet(const tshow_t packet, int __tabs);
 
 void s_http_packet(const tshow_t packet, int __tabs);
+
+void s_bootp_packet(const tshow_t packet, int __tabs);

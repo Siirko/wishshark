@@ -43,6 +43,13 @@ struct bootp
     u_int8_t bp_vend[64];     /* vendor-specific area */
 };
 
+// macro to print chaddr in hex
+// #define BOOTP_CHADDR_FMT(chaddr, str_array) do
+// {
+//
+// }
+// while (0)
+
 /*
  * UDP port numbers, server and client.
  */
@@ -60,9 +67,9 @@ struct bootp
 /*
  * Vendor magic cookie (v_magic) for RFC1048
  */
-#define VM_RFC1048                                                             \
-    {                                                                          \
-        99, 130, 83, 99                                                        \
+#define VM_RFC1048                                                                                                     \
+    {                                                                                                                  \
+        99, 130, 83, 99                                                                                                \
     }
 
 /*
@@ -191,6 +198,87 @@ struct bootp
 #define TAG_EXTENDED_REQUEST ((u_int8_t)126)
 #define TAG_EXTENDED_OPTION ((u_int8_t)127)
 
+// create map with TAG defines associated with a string
+const char *BOOTP_TAG_MAP[] = {
+    [TAG_PAD] = "PAD",
+    [TAG_SUBNET_MASK] = "Subnet Mask",
+    [TAG_TIME_OFFSET] = "Time Offset",
+    [TAG_GATEWAY] = "Gateway",
+    [TAG_TIME_SERVER] = "Time Server",
+    [TAG_NAME_SERVER] = "Name Server",
+    [TAG_DOMAIN_SERVER] = "Domain Server",
+    [TAG_LOG_SERVER] = "Log Server",
+    [TAG_COOKIE_SERVER] = "Cookie Server",
+    [TAG_LPR_SERVER] = "LPR Server",
+    [TAG_IMPRESS_SERVER] = "Impress Server",
+    [TAG_RLP_SERVER] = "RLP Server",
+    [TAG_HOSTNAME] = "Hostname",
+    [TAG_BOOTSIZE] = "Bootsize",
+    [TAG_END] = "End",
+    [TAG_DUMPPATH] = "Dump Path",
+    [TAG_DOMAINNAME] = "Domain Name",
+    [TAG_SWAP_SERVER] = "Swap Server",
+    [TAG_ROOTPATH] = "Root Path",
+    [TAG_EXTPATH] = "Ext Path",
+    [TAG_IP_FORWARD] = "IP Forward",
+    [TAG_NL_SRCRT] = "NL Srcrt",
+    [TAG_PFILTERS] = "P Filters",
+    [TAG_REASS_SIZE] = "Reass Size",
+    [TAG_DEF_TTL] = "Def TTL",
+    [TAG_MTU_TIMEOUT] = "MTU Timeout",
+    [TAG_MTU_TABLE] = "MTU Table",
+    [TAG_INT_MTU] = "Int MTU",
+    [TAG_LOCAL_SUBNETS] = "Local Subnets",
+    [TAG_BROAD_ADDR] = "Broad Addr",
+    [TAG_DO_MASK_DISC] = "Do Mask Disc",
+    [TAG_SUPPLY_MASK] = "Supply Mask",
+    [TAG_DO_RDISC] = "Do Rdisc",
+    [TAG_RTR_SOL_ADDR] = "Rtr Sol Addr",
+    [TAG_STATIC_ROUTE] = "Static Route",
+    [TAG_USE_TRAILERS] = "Use Trailers",
+    [TAG_ARP_TIMEOUT] = "ARP Timeout",
+    [TAG_ETH_ENCAP] = "Eth Encap",
+    [TAG_TCP_TTL] = "TCP TTL",
+    [TAG_TCP_KEEPALIVE] = "TCP Keepalive",
+    [TAG_KEEPALIVE_GO] = "Keepalive Go",
+    [TAG_NIS_DOMAIN] = "NIS Domain",
+    [TAG_NIS_SERVERS] = "NIS Servers",
+    [TAG_NTP_SERVERS] = "NTP Servers",
+    [TAG_VENDOR_OPTS] = "Vendor Opts",
+    [TAG_NETBIOS_NS] = "Netbios NS",
+    [TAG_NETBIOS_DDS] = "Netbios DDS",
+    [TAG_NETBIOS_NODE] = "Netbios Node",
+    [TAG_NETBIOS_SCOPE] = "Netbios Scope",
+    [TAG_XWIN_FS] = "Xwin FS",
+    [TAG_XWIN_DM] = "Xwin DM",
+    [TAG_NIS_P_DOMAIN] = "NIS P Domain",
+    [TAG_NIS_P_SERVERS] = "NIS P Servers",
+    [TAG_MOBILE_HOME] = "Mobile Home",
+    [TAG_SMPT_SERVER] = "SMTP Server",
+    [TAG_POP3_SERVER] = "POP3 Server",
+    [TAG_NNTP_SERVER] = "NNTP Server",
+    [TAG_WWW_SERVER] = "WWW Server",
+    [TAG_FINGER_SERVER] = "Finger Server",
+    [TAG_IRC_SERVER] = "IRC Server",
+    [TAG_STREETTALK_SRVR] = "Streettalk Server",
+    [TAG_STREETTALK_STDA] = "Streettalk Stda",
+    // DHCP Options
+    [TAG_REQUESTED_IP] = "Requested IP",
+    [TAG_IP_LEASE] = "IP Lease",
+    [TAG_OPT_OVERLOAD] = "Opt Overload",
+    [TAG_TFTP_SERVER] = "TFTP Server",
+    [TAG_BOOTFILENAME] = "Bootfilename",
+    [TAG_DHCP_MESSAGE] = "DHCP Message",
+    [TAG_SERVER_ID] = "Server ID",
+    [TAG_PARM_REQUEST] = "Parm Request",
+    [TAG_MESSAGE] = "Message",
+    [TAG_MAX_MSG_SIZE] = "Max Msg Size",
+    [TAG_RENEWAL_TIME] = "Renewal Time",
+    [TAG_REBIND_TIME] = "Rebind Time",
+    [TAG_VENDOR_CLASS] = "Vendor Class",
+    [TAG_CLIENT_ID] = "Client ID",
+};
+
 /* DHCP Message types (values for TAG_DHCP_MESSAGE option) */
 #define DHCPDISCOVER 1
 #define DHCPOFFER 2
@@ -219,3 +307,17 @@ struct cmu_vend
 
 /* v_flags values */
 #define VF_SMASK 1 /* Subnet mask field contains valid data */
+
+// I will not bother to implement other ones, I have other things to do
+// https://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml#arp-parameters-2
+#define BOOTP_HTYPE_ETHERNET 1
+#define BOOTP_HTYPE_IEEE802 6
+#define BOOTP_HTYPE_ARCNET 7
+#define BOOTP_HTYPE_FRELAY 15
+#define BOOTP_HTYPE_ATM 16
+#define BOOTP_HTYPE_HDLC 17
+
+const char *BOOTP_HTYPE_MAP[] = {
+    [BOOTP_HTYPE_ETHERNET] = "Ethernet",  [BOOTP_HTYPE_IEEE802] = "IEEE 802 Networks", [BOOTP_HTYPE_ARCNET] = "ARCENT",
+    [BOOTP_HTYPE_FRELAY] = "Frame Relay", [BOOTP_HTYPE_ATM] = "Async Transfer Mode",   [BOOTP_HTYPE_HDLC] = "HDLC",
+};

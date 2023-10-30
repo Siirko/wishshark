@@ -1,5 +1,6 @@
 #include "../include/show.h"
 #include "../include/ansi_color.h"
+#include "../include/bootp.h"
 #include "../include/cprintf.h"
 #include <stdlib.h>
 #include <string.h>
@@ -189,6 +190,9 @@ void s_udp_packet(const tshow_t packet, int __tabs)
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
     spprintf(true, false, " Length: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->len));
     spprintf(true, true, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->check));
+    if (ntohs(udp_header->source) == 67 || ntohs(udp_header->dest) == 67 || ntohs(udp_header->source) == 68 ||
+        ntohs(udp_header->dest) == 68)
+        s_bootp_packet(packet, __tabs + 1);
 }
 
 void s_icmp_packet(const tshow_t packet, int __tabs)
@@ -288,5 +292,57 @@ void s_http_packet(const tshow_t packet, int __tabs)
                tcp_payload_size);
         payload[tcp_payload_size] = '\0';
         spprintf(true, false, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
+    }
+}
+
+void s_bootp_packet(const tshow_t packet, int __tabs)
+{
+    struct bootp *bootp_header =
+        (struct bootp *)(packet.packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
+    spprintf(true, true, BBLU " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
+             bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
+    spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
+             BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
+    spprintf(true, false, " HLen: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hlen);
+    spprintf(true, false, " Hops: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hops);
+    spprintf(true, false, " XID: 0x%x\n", __tabs + 2, __tabs + 2, htonl(bootp_header->bp_xid));
+    spprintf(true, false, " Secs: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_secs);
+    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_flags);
+    spprintf(true, false, " CIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_ciaddr));
+    spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
+    spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
+    spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
+    spprintf(true, false, " CHAddr: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 2, bootp_header->bp_chaddr[0],
+             bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2], bootp_header->bp_chaddr[3],
+             bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
+    spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
+    spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
+
+    uint8_t *vend_ptr = bootp_header->bp_vend;
+    u_char magic_cookie[4] = {0};
+    memcpy(magic_cookie, vend_ptr, 4);
+    spprintf(true, false, " Magic Cookie: %x:%x:%x:%x\n", __tabs + 2, __tabs + 2, magic_cookie[0], magic_cookie[1],
+             magic_cookie[2], magic_cookie[3]);
+    vend_ptr += 4;
+    spprintf(true, true, BGRN " Vendor Specific Information:\n" CRESET, __tabs + 2, __tabs + 2);
+    // TODO: To enhance, give a function to use for each tag to have exact output
+    for (; *vend_ptr != 0xff;)
+    {
+        uint8_t tag = *vend_ptr;
+        uint8_t len = *(++vend_ptr);
+        u_char value[len + 10];
+        memset(value, 0, len + 10);
+        memcpy(value, ++vend_ptr, len);
+        vend_ptr += len;
+        spprintf(true, false, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
+                 BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
+        spprintf(true, false, " Len: %d\n", __tabs + 2, __tabs + 3, len);
+
+        u_char hex_value[len * 2 + 1];
+        for (int i = 0; i < len; i++)
+            sprintf(hex_value + i * 2, "%02x", value[i]);
+        spprintf(true, true, " Value: %s (0x%s)\n", __tabs + 2, __tabs + 3, value, hex_value);
+        // fwrite(value, sizeof(char), len, stdout);
     }
 }

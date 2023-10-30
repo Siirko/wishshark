@@ -55,7 +55,7 @@ void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ..
     if (start)
         for (int i = 0; i < spaces * wtab; i++)
             printf(" ");
-    for (int i = 0; i < spaces * wtab; i++)
+    for (int i = 0; i < spaces; i++)
     {
         if (i == 0)
             if (end)
