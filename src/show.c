@@ -88,7 +88,7 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
     spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
     spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
-    spprintf(true, false, " ID: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
+    spprintf(true, false, " ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
     spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
     spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
     spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
@@ -176,8 +176,12 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
     {
         // TODO
     }
-    if (ntohs(tcp_header->source) == 80 || ntohs(tcp_header->dest) == 80)
+    uint16_t tcp_port_source = ntohs(tcp_header->source);
+    uint16_t tcp_port_dest = ntohs(tcp_header->dest);
+    if (tcp_port_source == 80 || tcp_port_dest == 80)
         s_http_packet(packet, __tabs + 1);
+    if (tcp_port_source == 21 || tcp_port_dest == 21 || tcp_port_source == 20 || tcp_port_dest == 20)
+        s_ftp_packet(packet, __tabs + 1);
 }
 
 void s_udp_packet(const tshow_t packet, int __tabs)
@@ -204,10 +208,10 @@ void s_icmp_packet(const tshow_t packet, int __tabs)
     spprintf(true, true, BBLU " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Type: %d\n", __tabs + 2, __tabs + 2, icmp_header->type);
     spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
-    spprintf(true, false, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
+    spprintf(true, false, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
 
-    spprintf(true, false, " Control message: %s\n", __tabs + 2, __tabs + 2,
-             ICMP_TYPE_MAP[icmp_header->type] ? ICMP_TYPE_MAP[icmp_header->type] : "Unknown");
+    spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs + 2,
+             icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
     switch (icmp_header->type)
     {
     case ICMP_ECHOREPLY:
@@ -221,6 +225,8 @@ void s_icmp_packet(const tshow_t packet, int __tabs)
     case ICMP_REDIRECT:
         break;
     case ICMP_ECHO:
+        spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
+        spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
         break;
     case ICMP_TIME_EXCEEDED:
         break;
@@ -320,10 +326,9 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
     spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
 
     uint8_t *vend_ptr = bootp_header->bp_vend;
-    u_char magic_cookie[4] = {0};
-    memcpy(magic_cookie, vend_ptr, 4);
-    spprintf(true, false, " Magic Cookie: %x:%x:%x:%x\n", __tabs + 2, __tabs + 2, magic_cookie[0], magic_cookie[1],
-             magic_cookie[2], magic_cookie[3]);
+    struct cmu_vend *cmu_vend = (struct cmu_vend *)vend_ptr;
+    spprintf(true, false, " Magic Cookie: 0x%02x 0x%02x 0x%02x 0x%02x\n", __tabs + 2, __tabs + 2, cmu_vend->v_magic[0],
+             cmu_vend->v_magic[1], cmu_vend->v_magic[2], cmu_vend->v_magic[3]);
     vend_ptr += 4;
     spprintf(true, true, BGRN " Vendor Specific Information:\n" CRESET, __tabs + 2, __tabs + 2);
     // TODO: To enhance, give a function to use for each tag to have exact output
@@ -331,8 +336,8 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
     {
         uint8_t tag = *vend_ptr;
         uint8_t len = *(++vend_ptr);
-        u_char value[len + 10];
-        memset(value, 0, len + 10);
+        u_char value[len + 1];
+        memset(value, 0, len + 1);
         memcpy(value, ++vend_ptr, len);
         vend_ptr += len;
         spprintf(true, false, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
@@ -345,4 +350,10 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
         spprintf(true, true, " Value: %s (0x%s)\n", __tabs + 2, __tabs + 3, value, hex_value);
         // fwrite(value, sizeof(char), len, stdout);
     }
+}
+
+void s_ftp_packet(const tshow_t packet, int __tabs)
+{
+    //
+    size_t tcp_payload_size = tcp_payload_len(packet);
 }
