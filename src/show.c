@@ -329,6 +329,13 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
     for (; *vend_ptr != 0xff;)
     {
         uint8_t tag = *vend_ptr;
+        if (tag == 0) // Padding
+        {
+            spprintf(true, true, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
+                     BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
+            vend_ptr++;
+            continue;
+        }
         uint8_t len = *(++vend_ptr);
         u_char value[len + 1];
         memset(value, 0, len + 1);
