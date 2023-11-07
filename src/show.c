@@ -165,17 +165,12 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
     if (tcp_header->ack)
         spprintf(true, false, " Acknowledgment Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->ack_seq));
     spprintf(true, false, " Data Offset: %d\n", __tabs + 2, __tabs + 2, tcp_header->doff);
-    spprintf(true, false, " Flags: %d%d%d%d%d%d\n", __tabs + 2, __tabs + 2, tcp_header->urg, tcp_header->ack,
-             tcp_header->psh, tcp_header->rst, tcp_header->syn, tcp_header->fin);
+    spprintf(true, false, " Flags: 0x%x\n", __tabs + 2, __tabs + 2, tcp_header->th_flags);
     spprintf(true, false, " Window: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->window));
-    spprintf(true, tcp_header->doff > 5 ? false : true, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2,
-             ntohs(tcp_header->check));
+    spprintf(true, tcp_header->urg ? false : true, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2,
+             ntohs(tcp_header->th_sum));
     if (tcp_header->urg)
         spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
-    if (tcp_header->doff > 5)
-    {
-        // TODO
-    }
     uint16_t tcp_port_source = ntohs(tcp_header->source);
     uint16_t tcp_port_dest = ntohs(tcp_header->dest);
     if (tcp_port_source == 80 || tcp_port_dest == 80)
@@ -294,10 +289,9 @@ void s_http_packet(const tshow_t packet, int __tabs)
         spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
         spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
         u_char *payload[tcp_payload_size];
-        memcpy(payload, packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr),
-               tcp_payload_size);
-        payload[tcp_payload_size] = '\0';
-        spprintf(true, false, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
+        memset(payload, 0, tcp_payload_size);
+        memcpy(payload, packet.packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size);
+        spprintf(true, true, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
     }
 }
 
@@ -354,6 +348,18 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
 
 void s_ftp_packet(const tshow_t packet, int __tabs)
 {
-    //
     size_t tcp_payload_size = tcp_payload_len(packet);
+    struct tcphdr *tcp_header = (struct tcphdr *)(packet.packet_body + sizeof(struct ether_header) +
+                                                  (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+    if (tcp_payload_size > 0)
+    {
+        spprintf(true, true, BBLU " FTP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
+        spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
+        spprintf(true, false, " Payload size: %d\n", __tabs + 2, __tabs + 2, tcp_payload_size);
+        u_char *payload[tcp_payload_size];
+        memset(payload, 0, tcp_payload_size);
+        memcpy(payload, packet.packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size - 1);
+        spprintf(true, true, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
+    }
 }
