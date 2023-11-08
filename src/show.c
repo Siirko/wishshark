@@ -366,7 +366,6 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
              cmu_vend->v_magic[1], cmu_vend->v_magic[2], cmu_vend->v_magic[3]);
     vend_ptr += 4;
     spprintf(true, true, BGRN " Vendor Specific Information:\n" CRESET, __tabs + 2, __tabs + 2);
-    // TODO: To enhance, give a function to use for each tag to have exact output
     for (; *vend_ptr != 0xff;)
     {
         uint8_t tag = *vend_ptr;
@@ -385,12 +384,73 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
         spprintf(true, false, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
                  BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
         spprintf(true, false, " Len: %d\n", __tabs + 2, __tabs + 3, len);
-
-        u_char hex_value[len * 2 + 1];
-        for (int i = 0; i < len; i++)
-            sprintf(hex_value + i * 2, "%02x", value[i]);
-        spprintf(true, true, " Value: %s (0x%s)\n", __tabs + 2, __tabs + 3, value, hex_value);
-        // fwrite(value, sizeof(char), len, stdout);
+        if (tag == TAG_IP_LEASE || tag == TAG_RENEWAL_TIME || tag == TAG_REBIND_TIME)
+        {
+            spprintf(true, true, " Value: %ds\n", __tabs + 2, __tabs + 3, ntohl(*(uint32_t *)value));
+            continue;
+        }
+        if (tag == TAG_SUBNET_MASK || tag == TAG_GATEWAY || tag == TAG_SERVER_ID)
+        {
+            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
+            continue;
+        }
+        switch (tag)
+        {
+        case TAG_DHCP_MESSAGE:
+        {
+            spprintf(true, true, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
+                     BOOTP_DHCP_MESSAGE_MAP[value[0]] ? BOOTP_DHCP_MESSAGE_MAP[value[0]] : "Unknown");
+            break;
+        }
+        case TAG_DOMAIN_SERVER:
+        {
+            int size = len / 4;
+            struct in_addr *addr = (struct in_addr *)value;
+            for (int i = 0; i < size; i++)
+                spprintf(true, size - 1 == i ? true : false, " Value: %s\n", __tabs + 2, __tabs + 3,
+                         inet_ntoa(addr[i]));
+            break;
+        }
+        case TAG_CLIENT_ID: // TYPE:VENDOR...
+        {
+            spprintf(true, false, " Type: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
+                     BOOTP_CLIENT_ID_TYPE_MAP[value[0]] ? BOOTP_CLIENT_ID_TYPE_MAP[value[0]] : "Unknown");
+            switch (value[0])
+            {
+            case BOOTP_CLIENT_ID_TYPE_ASCII:
+                spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, value + 1);
+                break;
+            case BOOTP_CLIENT_ID_TYPE_HEX:
+                spprintf(true, true, " Value: 0x%s\n", __tabs + 2, __tabs + 3, value + 1);
+                break;
+            case BOOTP_CLIENT_ID_TYPE_MAC:
+                spprintf(true, true, " Value: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 3, value[1], value[2],
+                         value[3], value[4], value[5], value[6]);
+                break;
+            }
+            break;
+        }
+        case TAG_PARM_REQUEST:
+        {
+            int size = len;
+            for (int i = 0; i < size; i++)
+                spprintf(true, size - 1 == i ? true : false, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[i],
+                         BOOTP_TAG_MAP[value[i]] ? BOOTP_TAG_MAP[value[i]] : "Unknown");
+            break;
+        }
+        case TAG_MAX_MSG_SIZE:
+        {
+            spprintf(true, true, " Value: %d\n", __tabs + 2, __tabs + 3, ntohs(*(uint16_t *)value));
+            break;
+        }
+        default:
+        {
+            char hex_value[len * 2 + 1];
+            for (int i = 0; i < len; i++)
+                sprintf(hex_value + i * 2, "%02x", value[i]);
+            spprintf(true, true, " Value: 0x%s)\n", __tabs + 2, __tabs + 3, hex_value);
+        }
+        }
     }
 }
 

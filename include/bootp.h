@@ -191,6 +191,9 @@ struct bootp
 #define TAG_EXTENDED_REQUEST ((u_int8_t)126)
 #define TAG_EXTENDED_OPTION ((u_int8_t)127)
 
+// Could've been simplier with X macros, but didn't want to bother
+// this code is not mine, I just want to make it work
+
 // create map with TAG defines associated with a string
 const char *BOOTP_TAG_MAP[] = {
     [TAG_PAD] = "PAD",
@@ -272,6 +275,16 @@ const char *BOOTP_TAG_MAP[] = {
     [TAG_CLIENT_ID] = "Client ID",
 };
 
+#define BOOTP_CLIENT_ID_TYPE_ASCII 0
+#define BOOTP_CLIENT_ID_TYPE_HEX 1
+#define BOOTP_CLIENT_ID_TYPE_MAC 2
+
+const char *BOOTP_CLIENT_ID_TYPE_MAP[] = {
+    [BOOTP_CLIENT_ID_TYPE_ASCII] = "ASCII",
+    [BOOTP_CLIENT_ID_TYPE_HEX] = "Hex",
+    [BOOTP_CLIENT_ID_TYPE_MAC] = "MAC",
+};
+
 /* DHCP Message types (values for TAG_DHCP_MESSAGE option) */
 #define DHCPDISCOVER 1
 #define DHCPOFFER 2
@@ -282,6 +295,11 @@ const char *BOOTP_TAG_MAP[] = {
 #define DHCPRELEASE 7
 #define DHCPINFORM 8
 
+const char *BOOTP_DHCP_MESSAGE_MAP[] = {
+    [DHCPDISCOVER] = "DHCP Discover", [DHCPOFFER] = "DHCP Offer",   [DHCPREQUEST] = "DHCP Request",
+    [DHCPDECLINE] = "DHCP Decline",   [DHCPACK] = "DHCP ACK",       [DHCPNAK] = "DHCP NAK",
+    [DHCPRELEASE] = "DHCP Release",   [DHCPINFORM] = "DHCP Inform",
+};
 /*
  * "vendor" data permitted for CMU bootp clients.
  */
