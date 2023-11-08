@@ -20,6 +20,8 @@
         "functional": "c",
         "tuple": "c",
         "type_traits": "c",
-        "utility": "c"
+        "utility": "c",
+        "ctype.h": "c",
+        "stdbool.h": "c"
     },
 }

@@ -191,99 +191,9 @@ struct bootp
 #define TAG_EXTENDED_REQUEST ((u_int8_t)126)
 #define TAG_EXTENDED_OPTION ((u_int8_t)127)
 
-// Could've been simplier with X macros, but didn't want to bother
-// this code is not mine, I just want to make it work
-
-// create map with TAG defines associated with a string
-const char *BOOTP_TAG_MAP[] = {
-    [TAG_PAD] = "PAD",
-    [TAG_SUBNET_MASK] = "Subnet Mask",
-    [TAG_TIME_OFFSET] = "Time Offset",
-    [TAG_GATEWAY] = "Gateway",
-    [TAG_TIME_SERVER] = "Time Server",
-    [TAG_NAME_SERVER] = "Name Server",
-    [TAG_DOMAIN_SERVER] = "Domain Server",
-    [TAG_LOG_SERVER] = "Log Server",
-    [TAG_COOKIE_SERVER] = "Cookie Server",
-    [TAG_LPR_SERVER] = "LPR Server",
-    [TAG_IMPRESS_SERVER] = "Impress Server",
-    [TAG_RLP_SERVER] = "RLP Server",
-    [TAG_HOSTNAME] = "Hostname",
-    [TAG_BOOTSIZE] = "Bootsize",
-    [TAG_END] = "End",
-    [TAG_DUMPPATH] = "Dump Path",
-    [TAG_DOMAINNAME] = "Domain Name",
-    [TAG_SWAP_SERVER] = "Swap Server",
-    [TAG_ROOTPATH] = "Root Path",
-    [TAG_EXTPATH] = "Ext Path",
-    [TAG_IP_FORWARD] = "IP Forward",
-    [TAG_NL_SRCRT] = "NL Srcrt",
-    [TAG_PFILTERS] = "P Filters",
-    [TAG_REASS_SIZE] = "Reass Size",
-    [TAG_DEF_TTL] = "Def TTL",
-    [TAG_MTU_TIMEOUT] = "MTU Timeout",
-    [TAG_MTU_TABLE] = "MTU Table",
-    [TAG_INT_MTU] = "Int MTU",
-    [TAG_LOCAL_SUBNETS] = "Local Subnets",
-    [TAG_BROAD_ADDR] = "Broad Addr",
-    [TAG_DO_MASK_DISC] = "Do Mask Disc",
-    [TAG_SUPPLY_MASK] = "Supply Mask",
-    [TAG_DO_RDISC] = "Do Rdisc",
-    [TAG_RTR_SOL_ADDR] = "Rtr Sol Addr",
-    [TAG_STATIC_ROUTE] = "Static Route",
-    [TAG_USE_TRAILERS] = "Use Trailers",
-    [TAG_ARP_TIMEOUT] = "ARP Timeout",
-    [TAG_ETH_ENCAP] = "Eth Encap",
-    [TAG_TCP_TTL] = "TCP TTL",
-    [TAG_TCP_KEEPALIVE] = "TCP Keepalive",
-    [TAG_KEEPALIVE_GO] = "Keepalive Go",
-    [TAG_NIS_DOMAIN] = "NIS Domain",
-    [TAG_NIS_SERVERS] = "NIS Servers",
-    [TAG_NTP_SERVERS] = "NTP Servers",
-    [TAG_VENDOR_OPTS] = "Vendor Opts",
-    [TAG_NETBIOS_NS] = "Netbios NS",
-    [TAG_NETBIOS_DDS] = "Netbios DDS",
-    [TAG_NETBIOS_NODE] = "Netbios Node",
-    [TAG_NETBIOS_SCOPE] = "Netbios Scope",
-    [TAG_XWIN_FS] = "Xwin FS",
-    [TAG_XWIN_DM] = "Xwin DM",
-    [TAG_NIS_P_DOMAIN] = "NIS P Domain",
-    [TAG_NIS_P_SERVERS] = "NIS P Servers",
-    [TAG_MOBILE_HOME] = "Mobile Home",
-    [TAG_SMPT_SERVER] = "SMTP Server",
-    [TAG_POP3_SERVER] = "POP3 Server",
-    [TAG_NNTP_SERVER] = "NNTP Server",
-    [TAG_WWW_SERVER] = "WWW Server",
-    [TAG_FINGER_SERVER] = "Finger Server",
-    [TAG_IRC_SERVER] = "IRC Server",
-    [TAG_STREETTALK_SRVR] = "Streettalk Server",
-    [TAG_STREETTALK_STDA] = "Streettalk Stda",
-    // DHCP Options
-    [TAG_REQUESTED_IP] = "Requested IP",
-    [TAG_IP_LEASE] = "IP Lease",
-    [TAG_OPT_OVERLOAD] = "Opt Overload",
-    [TAG_TFTP_SERVER] = "TFTP Server",
-    [TAG_BOOTFILENAME] = "Bootfilename",
-    [TAG_DHCP_MESSAGE] = "DHCP Message",
-    [TAG_SERVER_ID] = "Server ID",
-    [TAG_PARM_REQUEST] = "Parm Request",
-    [TAG_MESSAGE] = "Message",
-    [TAG_MAX_MSG_SIZE] = "Max Msg Size",
-    [TAG_RENEWAL_TIME] = "Renewal Time",
-    [TAG_REBIND_TIME] = "Rebind Time",
-    [TAG_VENDOR_CLASS] = "Vendor Class",
-    [TAG_CLIENT_ID] = "Client ID",
-};
-
 #define BOOTP_CLIENT_ID_TYPE_ASCII 0
 #define BOOTP_CLIENT_ID_TYPE_HEX 1
 #define BOOTP_CLIENT_ID_TYPE_MAC 2
-
-const char *BOOTP_CLIENT_ID_TYPE_MAP[] = {
-    [BOOTP_CLIENT_ID_TYPE_ASCII] = "ASCII",
-    [BOOTP_CLIENT_ID_TYPE_HEX] = "Hex",
-    [BOOTP_CLIENT_ID_TYPE_MAC] = "MAC",
-};
 
 /* DHCP Message types (values for TAG_DHCP_MESSAGE option) */
 #define DHCPDISCOVER 1
@@ -295,11 +205,6 @@ const char *BOOTP_CLIENT_ID_TYPE_MAP[] = {
 #define DHCPRELEASE 7
 #define DHCPINFORM 8
 
-const char *BOOTP_DHCP_MESSAGE_MAP[] = {
-    [DHCPDISCOVER] = "DHCP Discover", [DHCPOFFER] = "DHCP Offer",   [DHCPREQUEST] = "DHCP Request",
-    [DHCPDECLINE] = "DHCP Decline",   [DHCPACK] = "DHCP ACK",       [DHCPNAK] = "DHCP NAK",
-    [DHCPRELEASE] = "DHCP Release",   [DHCPINFORM] = "DHCP Inform",
-};
 /*
  * "vendor" data permitted for CMU bootp clients.
  */
@@ -327,8 +232,3 @@ struct cmu_vend
 #define BOOTP_HTYPE_FRELAY 15
 #define BOOTP_HTYPE_ATM 16
 #define BOOTP_HTYPE_HDLC 17
-
-const char *BOOTP_HTYPE_MAP[] = {
-    [BOOTP_HTYPE_ETHERNET] = "Ethernet",  [BOOTP_HTYPE_IEEE802] = "IEEE 802 Networks", [BOOTP_HTYPE_ARCNET] = "ARCENT",
-    [BOOTP_HTYPE_FRELAY] = "Frame Relay", [BOOTP_HTYPE_ATM] = "Async Transfer Mode",   [BOOTP_HTYPE_HDLC] = "HDLC",
-};
