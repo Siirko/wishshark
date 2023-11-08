@@ -1,5 +1,6 @@
 #pragma once
 #include "bootp.h"
+#include "dns.h"
 #include "show.h"
 #include <string.h>
 
@@ -13,3 +14,4 @@ void printf_icmp_type(struct icmphdr *icmp_header, int __tabs);
 void printf_arp_header(struct ether_arp *arp_header, int __tabs);
 void printf_bootp_header(struct bootp *bootp_header, int __tabs);
 void printf_bootp_vendor(struct bootp *bootp_header, int __tabs);
+void printf_dns_header(struct dnshdr *dns_header, int __tabs);

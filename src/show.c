@@ -109,6 +109,8 @@ void s_udp_packet(const tshow_t packet, int __tabs)
     if (ntohs(udp_header->source) == 67 || ntohs(udp_header->dest) == 67 || ntohs(udp_header->source) == 68 ||
         ntohs(udp_header->dest) == 68)
         s_bootp_packet(packet, __tabs + 1);
+    if (ntohs(udp_header->source) == 53 || ntohs(udp_header->dest) == 53)
+        s_dns_packet(packet, __tabs + 1);
 }
 
 void s_icmp_packet(const tshow_t packet, int __tabs)
@@ -153,3 +155,12 @@ void s_imap_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet
 void s_pop_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, POP); }
 
 void s_smtp_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, SMTP); }
+
+void s_dns_packet(const tshow_t packet, int __tabs)
+{
+    const u_char *packet_body = packet.packet_body;
+    struct dnshdr *dns_header =
+        (struct dnshdr *)(packet_body + sizeof(struct ether_header) +
+                          (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)) + sizeof(struct udphdr));
+    printf_dns_header(dns_header, __tabs);
+}

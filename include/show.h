@@ -39,7 +39,7 @@ void s_http_packet(const tshow_t packet, int __tabs);
 
 void s_bootp_packet(const tshow_t packet, int __tabs);
 
-// void s_dns_packet(const tshow_t packet, int __tabs);
+void s_dns_packet(const tshow_t packet, int __tabs);
 
 void s_imap_packet(const tshow_t packet, int __tabs);
 

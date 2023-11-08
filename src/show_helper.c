@@ -271,3 +271,31 @@ void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
     inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
     spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
 }
+
+void printf_dns_header(struct dnshdr *dns_header, int __tabs)
+{
+    uint16_t flags_word = dns_header->recursion_desired | (dns_header->truncation << 1) |
+                          (dns_header->authoritative_answer << 2) | (dns_header->opcode << 3) |
+                          (dns_header->query_or_response << 7) | (dns_header->response_code << 8) |
+                          (dns_header->checking_disabled << 12) | (dns_header->authentic_data << 13) |
+                          (dns_header->zero << 14) | (dns_header->recursion_available << 15);
+    spprintf(true, true, BBLU " DNS\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Transaction ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(dns_header->transactionID));
+    spprintf(true, false, " Flags: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(flags_word));
+    spprintf(true, false, " Questions: %d\n", __tabs + 2, __tabs + 2, ntohs(dns_header->n_questions));
+    spprintf(true, false, " Answer RRs: %d\n", __tabs + 2, __tabs + 2, ntohs(dns_header->n_answers));
+    spprintf(true, false, " Authority RRs: %d\n", __tabs + 2, __tabs + 2, ntohs(dns_header->n_authority));
+    spprintf(true, false, " Additional RRs: %d\n", __tabs + 2, __tabs + 2, ntohs(dns_header->n_additional));
+
+    const char *query = (char *)dns_header + sizeof(struct dnshdr) + 1;
+    size_t query_name_len = strlen(query);
+    char query_name[query_name_len + 1];
+    memmove(query_name, query, query_name_len + 1);
+    memcpy(query_name, query, query_name_len + 1);
+    nprint2print(query_name_len, query_name);
+    spprintf(true, false, " Query: %s\n", __tabs + 2, __tabs + 2, query_name);
+    uint32_t query_info = *(uint32_t *)((char *)dns_header + sizeof(struct dnshdr) + query_name_len + 2);
+    spprintf(true, false, " Query Type: %ld\n", __tabs + 2, __tabs + 2, ntohl(query_info) >> 16);
+    spprintf(true, false, " Query Class: %ld\n", __tabs + 2, __tabs + 2, ntohl(query_info) & 0x0000FFFF);
+    // See if there is an answer
+}

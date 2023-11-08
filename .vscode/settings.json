@@ -22,6 +22,8 @@
         "type_traits": "c",
         "utility": "c",
         "ctype.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "compare": "c",
+        "cstdint": "c"
     },
 }
