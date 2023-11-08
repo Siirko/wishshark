@@ -48,17 +48,28 @@ const char *ICMP_TYPE_MAP[] = {
     [ICMP_ADDRESSREPLY] = "Address Mask Reply",
 };
 
+/*
+    Those functions are hidden from the user,
+    they are used only by associated s_*_packet functions
+*/
+void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs);
+void printf_ip_header(struct ip *ip_header, int __tabs);
+void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs);
+void printf_tcp_header(struct tcphdr *tcp_header, int __tabs);
+void printf_udp_header(struct udphdr *udp_header, int __tabs);
+void printf_icmp_header(struct icmphdr *icmp_header, int __tabs);
+void printf_icmp_type(struct icmphdr *icmp_header, int __tabs);
+void printf_arp_header(struct ether_arp *arp_header, int __tabs);
+void printf_bootp_header(struct bootp *bootp_header, int __tabs);
+void printf_bootp_vendor(struct bootp *bootp_header, int __tabs);
+
 void s_ethernet_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
     spprintf(false, false, BBLU "\n\nEthernet\n" CRESET, __tabs, 0);
     struct ether_header *ethernet_header = (struct ether_header *)packet_body;
-    spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
-             ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
-    spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
-             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
-    spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+    printf_ethernet_header(ethernet_header, __tabs);
     switch (ntohs(ethernet_header->ether_type))
     {
     case ETHERTYPE_IP:
@@ -75,30 +86,21 @@ void s_ethernet_packet(const tshow_t packet, int __tabs)
     }
 }
 
+void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
+{
+    spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
+             ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
+    spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
+             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
+    spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+}
+
 void s_ip_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Internet_Protocol_version_4#Packet_structure
     struct ip *ip_header = (struct ip *)(packet_body + sizeof(struct ether_header));
-    spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_v);
-    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
-    // According to wikipedia ToS = DSCP but this seems to be blurry
-    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
-    // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
-    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
-    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
-    spprintf(true, false, " ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
-    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
-    spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
-    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
-    // protocol numbers: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
-    spprintf(true, false, " Protocol ID: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_p);
-    spprintf(true, false, " Protocol name: %s\n", __tabs + 2, __tabs + 2,
-             IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
-    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
-    spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
-             inet_ntoa(ip_header->ip_dst));
+    printf_ip_header(ip_header, __tabs);
     if (ip_header->ip_hl > 5)
     {
         spprintf(true, false, " Options type: %d\n", __tabs + 2, __tabs + 2,
@@ -121,22 +123,33 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     }
 }
 
+void printf_ip_header(struct ip *ip_header, int __tabs)
+{
+    spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_v);
+    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
+    // According to wikipedia ToS = DSCP but this seems to be blurry
+    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
+    // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
+    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
+    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
+    spprintf(true, false, " ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
+    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
+    spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
+    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
+    // protocol numbers: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
+    spprintf(true, false, " Protocol ID: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_p);
+    spprintf(true, false, " Protocol name: %s\n", __tabs + 2, __tabs + 2,
+             IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
+    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
+    spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
+             inet_ntoa(ip_header->ip_dst));
+}
+
 void s_ipv6_packet(const tshow_t packet, int __tabs)
 {
-    char addrstr[INET6_ADDRSTRLEN];
     struct ip6_hdr *ip6_header = (struct ip6_hdr *)(packet.packet_body + sizeof(struct ether_header));
-    spprintf(true, true, BBLU " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_vfc >> 4);
-    spprintf(true, false, " Traffic Class: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow >> 20);
-    spprintf(true, false, " Flow Label: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow & 0x000FFFFF);
-    spprintf(true, false, " Payload Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip6_header->ip6_plen));
-    spprintf(true, false, " Next Header: %d (%s)\n", __tabs + 2, __tabs + 2, ip6_header->ip6_nxt,
-             IP_PROT_MAP[ip6_header->ip6_nxt] ? IP_PROT_MAP[ip6_header->ip6_nxt] : "Unknown");
-    spprintf(true, false, " Hop Limit: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_hlim);
-    inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr));
-    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
-    inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
-    spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+    printf_ipv6_header(ip6_header, __tabs);
     switch (ip6_header->ip6_nxt)
     {
     case IPPROTO_TCP:
@@ -152,12 +165,41 @@ void s_ipv6_packet(const tshow_t packet, int __tabs)
         break;
     }
 }
+
+void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
+{
+    char addrstr[INET6_ADDRSTRLEN];
+    spprintf(true, true, BBLU " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_vfc >> 4);
+    spprintf(true, false, " Traffic Class: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow >> 20);
+    spprintf(true, false, " Flow Label: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow & 0x000FFFFF);
+    spprintf(true, false, " Payload Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip6_header->ip6_plen));
+    spprintf(true, false, " Next Header: %d (%s)\n", __tabs + 2, __tabs + 2, ip6_header->ip6_nxt,
+             IP_PROT_MAP[ip6_header->ip6_nxt] ? IP_PROT_MAP[ip6_header->ip6_nxt] : "Unknown");
+    spprintf(true, false, " Hop Limit: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_hlim);
+    inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr));
+    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+    inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
+    spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+}
+
 void s_tcp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
     struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) +
                                                   (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+    printf_tcp_header(tcp_header, __tabs);
+    uint16_t tcp_port_source = ntohs(tcp_header->source);
+    uint16_t tcp_port_dest = ntohs(tcp_header->dest);
+    if (tcp_port_source == 80 || tcp_port_dest == 80)
+        s_http_packet(packet, __tabs + 1);
+    if (tcp_port_source == 21 || tcp_port_dest == 21 || tcp_port_source == 20 || tcp_port_dest == 20)
+        s_ftp_packet(packet, __tabs + 1);
+}
+
+void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
+{
     spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
@@ -171,12 +213,6 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
              ntohs(tcp_header->th_sum));
     if (tcp_header->urg)
         spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
-    uint16_t tcp_port_source = ntohs(tcp_header->source);
-    uint16_t tcp_port_dest = ntohs(tcp_header->dest);
-    if (tcp_port_source == 80 || tcp_port_dest == 80)
-        s_http_packet(packet, __tabs + 1);
-    if (tcp_port_source == 21 || tcp_port_dest == 21 || tcp_port_source == 20 || tcp_port_dest == 20)
-        s_ftp_packet(packet, __tabs + 1);
 }
 
 void s_udp_packet(const tshow_t packet, int __tabs)
@@ -184,14 +220,19 @@ void s_udp_packet(const tshow_t packet, int __tabs)
     const u_char *packet_body = packet.packet_body;
     struct udphdr *udp_header = (struct udphdr *)(packet_body + sizeof(struct ether_header) +
                                                   (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+    printf_udp_header(udp_header, __tabs);
+    if (ntohs(udp_header->source) == 67 || ntohs(udp_header->dest) == 67 || ntohs(udp_header->source) == 68 ||
+        ntohs(udp_header->dest) == 68)
+        s_bootp_packet(packet, __tabs + 1);
+}
+
+void printf_udp_header(struct udphdr *udp_header, int __tabs)
+{
     spprintf(true, true, BBLU " UDP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
     spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
     spprintf(true, false, " Length: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->len));
     spprintf(true, true, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->check));
-    if (ntohs(udp_header->source) == 67 || ntohs(udp_header->dest) == 67 || ntohs(udp_header->source) == 68 ||
-        ntohs(udp_header->dest) == 68)
-        s_bootp_packet(packet, __tabs + 1);
 }
 
 void s_icmp_packet(const tshow_t packet, int __tabs)
@@ -200,11 +241,20 @@ void s_icmp_packet(const tshow_t packet, int __tabs)
     // https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
     struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) +
                                                      (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+
+    printf_icmp_header(icmp_header, __tabs);
+}
+
+void printf_icmp_header(struct icmphdr *icmp_header, int __tabs)
+{
     spprintf(true, true, BBLU " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Type: %d\n", __tabs + 2, __tabs + 2, icmp_header->type);
     spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
     spprintf(true, false, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
+}
 
+void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
+{
     spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs + 2,
              icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
     switch (icmp_header->type)
@@ -248,6 +298,11 @@ void s_arp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     struct ether_arp *arp_header = (struct ether_arp *)(packet_body + sizeof(struct ether_header));
+    printf_arp_header(arp_header, __tabs);
+}
+
+void printf_arp_header(struct ether_arp *arp_header, int __tabs)
+{
     spprintf(true, true, BBLU " ARP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Hardware type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_hrd));
     spprintf(true, false, " Protocol type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_pro));
@@ -299,26 +354,12 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
 {
     struct bootp *bootp_header =
         (struct bootp *)(packet.packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
-    spprintf(true, true, BBLU " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
-             bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
-    spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
-             BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
-    spprintf(true, false, " HLen: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hlen);
-    spprintf(true, false, " Hops: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hops);
-    spprintf(true, false, " XID: 0x%x\n", __tabs + 2, __tabs + 2, htonl(bootp_header->bp_xid));
-    spprintf(true, false, " Secs: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_secs);
-    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_flags);
-    spprintf(true, false, " CIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_ciaddr));
-    spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
-    spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
-    spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
-    spprintf(true, false, " CHAddr: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 2, bootp_header->bp_chaddr[0],
-             bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2], bootp_header->bp_chaddr[3],
-             bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
-    spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
-    spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
+    printf_bootp_header(bootp_header, __tabs);
+    printf_bootp_vendor(bootp_header, __tabs);
+}
 
+void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
+{
     uint8_t *vend_ptr = bootp_header->bp_vend;
     struct cmu_vend *cmu_vend = (struct cmu_vend *)vend_ptr;
     spprintf(true, false, " Magic Cookie: 0x%02x 0x%02x 0x%02x 0x%02x\n", __tabs + 2, __tabs + 2, cmu_vend->v_magic[0],
@@ -351,6 +392,29 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
         spprintf(true, true, " Value: %s (0x%s)\n", __tabs + 2, __tabs + 3, value, hex_value);
         // fwrite(value, sizeof(char), len, stdout);
     }
+}
+
+void printf_bootp_header(struct bootp *bootp_header, int __tabs)
+{
+    spprintf(true, true, BBLU " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
+    spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
+             bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
+    spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
+             BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
+    spprintf(true, false, " HLen: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hlen);
+    spprintf(true, false, " Hops: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hops);
+    spprintf(true, false, " XID: 0x%x\n", __tabs + 2, __tabs + 2, htonl(bootp_header->bp_xid));
+    spprintf(true, false, " Secs: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_secs);
+    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_flags);
+    spprintf(true, false, " CIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_ciaddr));
+    spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
+    spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
+    spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
+    spprintf(true, false, " CHAddr: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 2, bootp_header->bp_chaddr[0],
+             bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2], bootp_header->bp_chaddr[3],
+             bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
+    spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
+    spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
 }
 
 void s_ftp_packet(const tshow_t packet, int __tabs)

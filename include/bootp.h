@@ -43,13 +43,6 @@ struct bootp
     u_int8_t bp_vend[64];     /* vendor-specific area */
 };
 
-// macro to print chaddr in hex
-// #define BOOTP_CHADDR_FMT(chaddr, str_array) do
-// {
-//
-// }
-// while (0)
-
 /*
  * UDP port numbers, server and client.
  */
