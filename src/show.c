@@ -463,7 +463,7 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
             memset(hex_value, 0, len * 2 + 1);
             for (int i = 0; i < len; i++)
                 sprintf(hex_value + i * 2, "%02x", value[i]);
-            spprintf(true, true, " Value: 0x%s)\n", __tabs + 2, __tabs + 3, hex_value);
+            spprintf(true, true, " Value: 0x%s\n", __tabs + 2, __tabs + 3, hex_value);
         }
         }
     }
