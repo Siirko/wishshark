@@ -1,6 +1,7 @@
 #pragma once
 
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
 #include <netinet/ip.h>
@@ -39,3 +40,5 @@ void s_http_packet(const tshow_t packet, int __tabs);
 void s_bootp_packet(const tshow_t packet, int __tabs);
 
 void s_ftp_packet(const tshow_t packet, int __tabs);
+
+void nprint2print(size_t len, u_char str[len]);

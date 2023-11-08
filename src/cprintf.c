@@ -48,6 +48,13 @@ noreturn void chprintf(int syserr, const char *file, int line, const char *info,
     exit(EXIT_FAILURE);
 }
 
+void nprint2print(size_t len, u_char str[len])
+{
+    for (size_t i = 0; i < len; i++)
+        if (!isprint(str[i]))
+            str[i] = (u_char)'.';
+}
+
 void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ...)
 {
     va_list args;
@@ -65,6 +72,7 @@ void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ..
         else
             printf("─");
     }
+    //
     vprintf(format, args);
     va_end(args);
 }

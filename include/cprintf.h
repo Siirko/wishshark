@@ -1,6 +1,10 @@
 #pragma once
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
+
+typedef unsigned char u_char;
 
 #define CHK(op)                                                                                                        \
     do                                                                                                                 \
@@ -57,5 +61,7 @@ void eprintf(const char *msg, const char *file, int line);
  * CHK_FWRITE(op, size_to_write, info) macros to call this function
  */
 void chprintf(int syserr, const char *file, int line, const char *info, const char *msg, ...);
+
+void nprint2print(size_t len, u_char str[len]);
 
 void spprintf(bool start, bool end, const char *format, int spaces, int wtab, ...);

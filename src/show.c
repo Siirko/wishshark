@@ -2,6 +2,7 @@
 #include "../include/ansi_color.h"
 #include "../include/bootp.h"
 #include "../include/cprintf.h"
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -343,9 +344,10 @@ void s_http_packet(const tshow_t packet, int __tabs)
         spprintf(true, true, BBLU " HTTP\n" CRESET, __tabs + 1, __tabs + 2);
         spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
         spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
-        u_char *payload[tcp_payload_size];
+        u_char payload[tcp_payload_size];
         memset(payload, 0, tcp_payload_size);
         memcpy(payload, packet.packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size);
+        nprint2print(tcp_payload_size - 1, payload);
         spprintf(true, true, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
     }
 }
@@ -503,9 +505,10 @@ void s_ftp_packet(const tshow_t packet, int __tabs)
         spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
         spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
         spprintf(true, false, " Payload size: %d\n", __tabs + 2, __tabs + 2, tcp_payload_size);
-        u_char *payload[tcp_payload_size];
+        u_char payload[tcp_payload_size];
         memset(payload, 0, tcp_payload_size);
         memcpy(payload, packet.packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size - 1);
+        nprint2print(tcp_payload_size - 1, payload);
         spprintf(true, true, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
     }
 }
