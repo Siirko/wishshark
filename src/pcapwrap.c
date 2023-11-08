@@ -10,7 +10,9 @@
 char *get_device_name(bpf_u_int32 *net, bpf_u_int32 *mask)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     char *dev = pcap_lookupdev(errbuf);
+#pragma GCC diagnostic pop
     if (dev == NULL)
     {
         fprintf(stderr, "Couldn't find default device: %s\n", errbuf);

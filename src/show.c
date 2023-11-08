@@ -421,13 +421,27 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
                 spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, value + 1);
                 break;
             case BOOTP_CLIENT_ID_TYPE_HEX:
-                spprintf(true, true, " Value: 0x%s\n", __tabs + 2, __tabs + 3, value + 1);
+            {
+                char hex_value[len * 3 + 1];
+                memset(hex_value, 0, len * 3 + 1);
+                for (int i = 0; i < len - 1; i++)
+                    if (i == len - 2)
+                        sprintf(hex_value + i * 3, "%02x", value[i + 1]);
+                    else
+                        sprintf(hex_value + i * 3, "%02x:", value[i + 1]);
+                spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, hex_value);
                 break;
+            }
             case BOOTP_CLIENT_ID_TYPE_MAC:
                 spprintf(true, true, " Value: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 3, value[1], value[2],
                          value[3], value[4], value[5], value[6]);
                 break;
             }
+            break;
+        }
+        case TAG_REQUESTED_IP:
+        {
+            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
             break;
         }
         case TAG_PARM_REQUEST:
@@ -446,6 +460,7 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
         default:
         {
             char hex_value[len * 2 + 1];
+            memset(hex_value, 0, len * 2 + 1);
             for (int i = 0; i < len; i++)
                 sprintf(hex_value + i * 2, "%02x", value[i]);
             spprintf(true, true, " Value: 0x%s)\n", __tabs + 2, __tabs + 3, hex_value);
@@ -470,9 +485,9 @@ void printf_bootp_header(struct bootp *bootp_header, int __tabs)
     spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
     spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
     spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
-    spprintf(true, false, " CHAddr: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 2, bootp_header->bp_chaddr[0],
-             bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2], bootp_header->bp_chaddr[3],
-             bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
+    spprintf(true, false, " CHAddr: %02x:%02x:%02x:%02x:%02x:%02x\n", __tabs + 2, __tabs + 2,
+             bootp_header->bp_chaddr[0], bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2],
+             bootp_header->bp_chaddr[3], bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
     spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
     spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
 }

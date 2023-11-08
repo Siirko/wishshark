@@ -1,5 +1,4 @@
 #pragma once
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <pcap.h>
