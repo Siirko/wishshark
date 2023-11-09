@@ -370,6 +370,11 @@ void printf_dns_header(struct dnshdr *dns_header, int __tabs)
                     nprint2print(rdlength_decompressed, rdata);
                     spprintf(true, true, " %s: %s\n", __tabs + 3, __tabs + 3, DNS_TYPE_MAP[type], rdata);
                 }
+                else
+                {
+                    for (int i = 0; i < rdlength_decompressed; i++)
+                        printf("%02x ", rdata[i]);
+                }
                 break;
             }
             }
