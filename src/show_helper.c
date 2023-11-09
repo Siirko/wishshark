@@ -3,6 +3,8 @@
 #include "../include/bootp.h"
 #include "../include/cprintf.h"
 #include "../include/protocol_map.h"
+#include <stdarg.h>
+#include <stdlib.h>
 
 void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
 {
@@ -288,14 +290,46 @@ void printf_dns_header(struct dnshdr *dns_header, int __tabs)
     spprintf(true, false, " Additional RRs: %d\n", __tabs + 2, __tabs + 2, ntohs(dns_header->n_additional));
 
     const char *query = (char *)dns_header + sizeof(struct dnshdr) + 1;
-    size_t query_name_len = strlen(query);
-    char query_name[query_name_len + 1];
-    memmove(query_name, query, query_name_len + 1);
-    memcpy(query_name, query, query_name_len + 1);
+    char *query_name;
+    int query_name_len = asprintf(&query_name, "%s", query);
     nprint2print(query_name_len, query_name);
+    struct dnsquery *dnsquery = (struct dnsquery *)((char *)dns_header + sizeof(struct dnshdr) + query_name_len + 2);
     spprintf(true, false, " Query: %s\n", __tabs + 2, __tabs + 2, query_name);
-    uint32_t query_info = *(uint32_t *)((char *)dns_header + sizeof(struct dnshdr) + query_name_len + 2);
-    spprintf(true, false, " Query Type: %ld\n", __tabs + 2, __tabs + 2, ntohl(query_info) >> 16);
-    spprintf(true, false, " Query Class: %ld\n", __tabs + 2, __tabs + 2, ntohl(query_info) & 0x0000FFFF);
+    spprintf(true, false, " Query Type: %ld\n", __tabs + 2, __tabs + 2, ntohs(dnsquery->qtype));
+    spprintf(true, true, " Query Class: %ld\n", __tabs + 2, __tabs + 2, ntohs(dnsquery->qclass));
+    free(query_name);
     // See if there is an answer
+    if (ntohs(dns_header->n_answers) > 0)
+    {
+        // char *dnsanswer_name;
+        // int name_len = asprintf(&dnsanswer_name, "%x", (char *)dnsquery + sizeof(struct dnsquery) + 1);
+        // nprint2print(name_len, dnsanswer_name);
+        // puts(dnsanswer_name);
+        // free(dnsanswer_name);
+        // struct dnsanswer *answer = (struct dnsanswer *)((char *)dnsquery + sizeof(struct dnsquery));
+        const char *answer = (char *)dnsquery + sizeof(struct dnsquery);
+        uint16_t compression = *((uint16_t *)answer);
+        struct dnsquery *dnsquery = (struct dnsquery *)((char *)dnsquery + sizeof(struct dnsquery) + 1);
+        uint32_t ttl = *((uint32_t *)((char *)answer + sizeof(uint16_t) * 3));
+        uint16_t rdlength = *((uint16_t *)((char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t)));
+        deprintf("compression: %x\n", ntohs(compression));
+        deprintf("qtype: %x\n", ntohs(dnsquery->qtype));
+        deprintf("qclass: %x\n", ntohs(dnsquery->qclass));
+        deprintf("ttl: %x\n", ntohl(ttl));
+        deprintf("rdlength: %x\n", ntohs(rdlength));
+        // spprintf(true, true, BBLU " DNS Answer\n" CRESET, __tabs + 2, __tabs + 2);
+        // spprintf(true, false, " idk: %02x\n", __tabs + 3, __tabs + 2, ntohs(answer->compression));
+        // spprintf(true, false, " Type: %02x\n", __tabs + 3, __tabs + 2, ntohs(answer->query.qtype));
+        // spprintf(true, false, " Class: %02x\n", __tabs + 3, __tabs + 2, ntohs(answer->query.qclass));
+        // spprintf(true, false, " TTL: %02x\n", __tabs + 3, __tabs + 2, answer->ttl);
+        // spprintf(true, false, " RDLength: %02x\n", __tabs + 3, __tabs + 2, ntohl(answer->rdlength));
+        // struct dnsanswer *dnsanswer = (struct dnsanswer *)(dnsanswer + name_len + 1);
+        // spprintf(true, true, BBLU " DNS Answer\n" CRESET, __tabs + 2, __tabs + 3);
+        // spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dnsanswer_name);
+        // spprintf(true, false, " Type: %d\n", __tabs + 3, __tabs + 3, ntohs(dnsanswer->type));
+        // spprintf(true, false, " Class: %d\n", __tabs + 3, __tabs + 3, ntohs(dnsanswer->class));
+        // spprintf(true, false, " TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnsanswer->ttl));
+        // spprintf(true, false, " RDLength: %d\n", __tabs + 3, __tabs + 3, ntohs(dnsanswer->rdlength));
+        // free(dnsanswer_name);
+    }
 }

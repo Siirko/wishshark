@@ -20,7 +20,14 @@ struct dnshdr
 
 struct dnsquery
 {
-    char *qname; // Question Name (domain name)
     uint16_t qtype;
     uint16_t qclass;
+};
+
+struct dnsanswer
+{
+    uint16_t compression;
+    struct dnsquery query;
+    uint32_t ttl;
+    uint16_t rdlength;
 };
