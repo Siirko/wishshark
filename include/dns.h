@@ -27,7 +27,16 @@ struct dnsquery
 struct dnsanswer
 {
     uint16_t compression;
-    struct dnsquery query;
+    uint16_t type;
+    uint16_t class;
     uint32_t ttl;
     uint16_t rdlength;
 };
+
+#define DNS_TYPE_A 1
+#define DNS_TYPE_NS 2
+#define DNS_TYPE_CNAME 5
+#define DNS_TYPE_SOA 6
+#define DNS_TYPE_PTR 12
+#define DNS_TYPE_TXT 16
+#define DNS_TYPE_AAAA 28

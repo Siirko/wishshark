@@ -146,3 +146,8 @@ const char *BOOTP_TAG_MAP[] = {
     [TAG_VENDOR_CLASS] = "Vendor Class",
     [TAG_CLIENT_ID] = "Client ID",
 };
+
+const char *DNS_TYPE_MAP[] = {
+    [DNS_TYPE_A] = "A",     [DNS_TYPE_NS] = "NS",   [DNS_TYPE_CNAME] = "CNAME", [DNS_TYPE_SOA] = "SOA",
+    [DNS_TYPE_PTR] = "PTR", [DNS_TYPE_TXT] = "TXT", [DNS_TYPE_AAAA] = "AAAA",
+};

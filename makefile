@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS ?= -Wextra -Wall
+CFLAGS ?= -Wextra -Wall -D _GNU_SOURCE
 LDLIBS ?= -lm -lpcap
 
 EXEC = wishshark
