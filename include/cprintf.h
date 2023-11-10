@@ -11,6 +11,9 @@ enum VerboseLevel
     COMPLETE = 3
 };
 
+
+extern enum VerboseLevel verbose_level;
+
 typedef unsigned char u_char;
 
 #define CHK(op)                                                                                                        \

@@ -11,8 +11,6 @@
 void s_ethernet_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
-    // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
-    spprintf(false, false, BBLU "\n\nEthernet\n" CRESET, __tabs, 0);
     struct ether_header *ethernet_header = (struct ether_header *)packet_body;
     switch (verbose_level)
     {
@@ -71,9 +69,9 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     case IPPROTO_UDP:
         s_udp_packet(packet, __tabs + 1);
         break;
-    case IPPROTO_ICMP:
-        s_icmp_packet(packet, __tabs + 1);
-        break;
+    // case IPPROTO_ICMP:
+    //     s_icmp_packet(packet, __tabs + 1);
+    //     break;
     default:
         break;
     }
@@ -166,34 +164,23 @@ void s_udp_packet(const tshow_t packet, int __tabs)
         s_dns_packet(packet, __tabs + 1);
 }
 
-void s_icmp_packet(const tshow_t packet, int __tabs)
-{
-    const u_char *packet_body = packet.packet_body;
-    // https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
-    struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) +
-                                                     (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+// void s_icmp_packet(const tshow_t packet, int __tabs)
+// {
+//     const u_char *packet_body = packet.packet_body;
+//     // https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
+//     struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) +
+//                                                      (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
 
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_icmp_header_concise(icmp_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_icmp_header_verbose(icmp_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_icmp_header_complete(icmp_header, __tabs);
-        break;
-    }
-}
+//     printf_icmp_header(icmp_header, __tabs);
+// }
 
-void printf_icmp_header_complete(struct icmphdr *icmp_header, int __tabs)
-{
-    spprintf(true, true, BBLU " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Type: %d\n", __tabs + 2, __tabs + 2, icmp_header->type);
-    spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
-    spprintf(true, false, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
-}
+// void printf_icmp_header(struct icmphdr *icmp_header, int __tabs)
+// {
+//     spprintf(true, true, BBLU " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
+//     spprintf(true, false, " Type: %d\n", __tabs + 2, __tabs + 2, icmp_header->type);
+//     spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
+//     spprintf(true, false, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
+// }
 
 void s_arp_packet(const tshow_t packet, int __tabs)
 {
@@ -217,19 +204,9 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
 {
     struct bootp *bootp_header =
         (struct bootp *)(packet.packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_bootp_header_concise(bootp_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_bootp_header_verbose(bootp_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_bootp_header_complete(bootp_header, __tabs);
-        printf_bootp_vendor_complete(bootp_header, __tabs);
-        break;
-    }
+    printf_bootp_header(bootp_header, __tabs);
+    if (verbose_level == COMPLETE)
+        printf_bootp_vendor(bootp_header, __tabs);
 }
 
 void s_ftp_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, FTP); }

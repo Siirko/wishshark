@@ -31,7 +31,7 @@ void s_tcp_packet(const tshow_t packet, int __tabs);
 
 void s_udp_packet(const tshow_t packet, int __tabs);
 
-void s_icmp_packet(const tshow_t packet, int __tabs);
+// void s_icmp_packet(const tshow_t packet, int __tabs);
 
 void s_arp_packet(const tshow_t packet, int __tabs);
 
