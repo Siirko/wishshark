@@ -10,6 +10,8 @@
 
 struct arguments arguments;
 
+enum VerboseLevel verbose_level = 3;
+
 void initiate_args(int argc, char *argv[])
 {
 
@@ -17,6 +19,7 @@ void initiate_args(int argc, char *argv[])
     arguments.interface = "";
     arguments.input_file = "";
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    verbose_level = arguments.verbose_level;
 }
 
 int main(int argc, char **argv)

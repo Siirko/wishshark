@@ -118,159 +118,269 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
 
 void printf_bootp_header(struct bootp *bootp_header, int __tabs)
 {
-    spprintf(true, true, BBLU " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
-             bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
-    spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
-             BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
-    spprintf(true, false, " HLen: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hlen);
-    spprintf(true, false, " Hops: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hops);
-    spprintf(true, false, " XID: 0x%x\n", __tabs + 2, __tabs + 2, htonl(bootp_header->bp_xid));
-    spprintf(true, false, " Secs: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_secs);
-    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_flags);
-    spprintf(true, false, " CIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_ciaddr));
-    spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
-    spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
-    spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
-    spprintf(true, false, " CHAddr: %02x:%02x:%02x:%02x:%02x:%02x\n", __tabs + 2, __tabs + 2,
-             bootp_header->bp_chaddr[0], bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2],
-             bootp_header->bp_chaddr[3], bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
-    spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
-    spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
-}
-
-void printf_arp_header(struct ether_arp *arp_header, int __tabs)
-{
-    spprintf(true, true, BBLU " ARP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Hardware type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_hrd));
-    spprintf(true, false, " Protocol type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_pro));
-    spprintf(true, false, " Hardware size: %d\n", __tabs + 2, __tabs + 2, arp_header->arp_hln);
-    spprintf(true, false, " Protocol size: %d\n", __tabs + 2, __tabs + 2, arp_header->arp_pln);
-    spprintf(true, false, " Opcode: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_op));
-    spprintf(true, false, " Sender MAC Address: %s\n", __tabs + 2, __tabs + 2,
-             ether_ntoa((struct ether_addr *)arp_header->arp_sha));
-    spprintf(true, false, " Sender IP Address: %s\n", __tabs + 2, __tabs + 2,
-             inet_ntoa(*(struct in_addr *)arp_header->arp_spa));
-    spprintf(true, false, " Target MAC Address: %s\n", __tabs + 2, __tabs + 2,
-             ether_ntoa((struct ether_addr *)arp_header->arp_tha));
-    spprintf(true, true, " Target IP Address: %s\n", __tabs + 2, __tabs + 2,
-             inet_ntoa(*(struct in_addr *)arp_header->arp_tpa));
-}
-
-void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
-{
-    spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs + 2,
-             icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
-    switch (icmp_header->type)
+    switch (verbose_level)
     {
-    case ICMP_ECHOREPLY:
-        spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
-        spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
+    case CONCISE:
+        printf(BWHT " BOOTP " CRESET);
         break;
-    case ICMP_DEST_UNREACH:
+    case VERBOSE:
+        spprintf(true, true, BWHT " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
+                 bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
+        spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
+                 BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
         break;
-    case ICMP_SOURCE_QUENCH:
-        break;
-    case ICMP_REDIRECT:
-        break;
-    case ICMP_ECHO:
-        spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
-        spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
-        break;
-    case ICMP_TIME_EXCEEDED:
-        break;
-    case ICMP_PARAMETERPROB:
-        break;
-    case ICMP_TIMESTAMP:
-        break;
-    case ICMP_TIMESTAMPREPLY:
-        break;
-    case ICMP_INFO_REQUEST:
-        break;
-    case ICMP_INFO_REPLY:
-        break;
-    case ICMP_ADDRESS:
-        break;
-    case ICMP_ADDRESSREPLY:
-        break;
-    default:
+    case COMPLETE:
+        spprintf(true, true, BWHT " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
+                 bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
+        spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
+                 BOOTP_HTYPE_MAP[bootp_header->bp_htype] ? BOOTP_HTYPE_MAP[bootp_header->bp_htype] : "Unknown");
+        spprintf(true, false, " HLen: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hlen);
+        spprintf(true, false, " Hops: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_hops);
+        spprintf(true, false, " XID: 0x%x\n", __tabs + 2, __tabs + 2, htonl(bootp_header->bp_xid));
+        spprintf(true, false, " Secs: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_secs);
+        spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, bootp_header->bp_flags);
+        spprintf(true, false, " CIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_ciaddr));
+        spprintf(true, false, " YIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_yiaddr));
+        spprintf(true, false, " SIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_siaddr));
+        spprintf(true, false, " GIAddr: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(bootp_header->bp_giaddr));
+        spprintf(true, false, " CHAddr: %02x:%02x:%02x:%02x:%02x:%02x\n", __tabs + 2, __tabs + 2,
+                 bootp_header->bp_chaddr[0], bootp_header->bp_chaddr[1], bootp_header->bp_chaddr[2],
+                 bootp_header->bp_chaddr[3], bootp_header->bp_chaddr[4], bootp_header->bp_chaddr[5]);
+        spprintf(true, false, " SName: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_sname);
+        spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
         break;
     }
 }
 
+void printf_arp_header(struct ether_arp *arp_header, int __tabs)
+{
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BCYN " ARP " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BCYN " ARP\n" CRESET, __tabs + 1, __tabs + 2);
+
+        spprintf(true, false, " Sender MAC Address: %s\n", __tabs + 2, __tabs + 2,
+                 ether_ntoa((struct ether_addr *)arp_header->arp_sha));
+        spprintf(true, false, " Sender IP Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntoa(*(struct in_addr *)arp_header->arp_spa));
+        spprintf(true, false, " Target MAC Address: %s\n", __tabs + 2, __tabs + 2,
+                 ether_ntoa((struct ether_addr *)arp_header->arp_tha));
+        spprintf(true, true, " Target IP Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntoa(*(struct in_addr *)arp_header->arp_tpa));
+        break;
+    case COMPLETE:
+        spprintf(true, true, BCYN " ARP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Hardware type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_hrd));
+        spprintf(true, false, " Protocol type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_pro));
+        spprintf(true, false, " Hardware size: %d\n", __tabs + 2, __tabs + 2, arp_header->arp_hln);
+        spprintf(true, false, " Protocol size: %d\n", __tabs + 2, __tabs + 2, arp_header->arp_pln);
+        spprintf(true, false, " Opcode: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_op));
+        spprintf(true, false, " Sender MAC Address: %s\n", __tabs + 2, __tabs + 2,
+                 ether_ntoa((struct ether_addr *)arp_header->arp_sha));
+        spprintf(true, false, " Sender IP Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntoa(*(struct in_addr *)arp_header->arp_spa));
+        spprintf(true, false, " Target MAC Address: %s\n", __tabs + 2, __tabs + 2,
+                 ether_ntoa((struct ether_addr *)arp_header->arp_tha));
+        spprintf(true, true, " Target IP Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntoa(*(struct in_addr *)arp_header->arp_tpa));
+        break;
+    }
+}
+
+// void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
+// {
+//     spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs +
+//     2,
+//              icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
+//     switch (icmp_header->type)
+//     {
+//     case ICMP_ECHOREPLY:
+//         spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
+//         spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
+//         break;
+//     case ICMP_DEST_UNREACH:
+//         break;
+//     case ICMP_SOURCE_QUENCH:
+//         break;
+//     case ICMP_REDIRECT:
+//         break;
+//     case ICMP_ECHO:
+//         spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
+//         spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
+//         break;
+//     case ICMP_TIME_EXCEEDED:
+//         break;
+//     case ICMP_PARAMETERPROB:
+//         break;
+//     case ICMP_TIMESTAMP:
+//         break;
+//     case ICMP_TIMESTAMPREPLY:
+//         break;
+//     case ICMP_INFO_REQUEST:
+//         break;
+//     case ICMP_INFO_REPLY:
+//         break;
+//     case ICMP_ADDRESS:
+//         break;
+//     case ICMP_ADDRESSREPLY:
+//         break;
+//     default:
+//         break;
+//     }
+// }
+
 void printf_udp_header(struct udphdr *udp_header, int __tabs)
 {
-    spprintf(true, true, BBLU " UDP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
-    spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
-    spprintf(true, false, " Length: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->len));
-    spprintf(true, true, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->check));
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BMAG " UDP " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BMAG " UDP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
+        spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
+        break;
+    case COMPLETE:
+        spprintf(true, true, BMAG " UDP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
+        spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->dest));
+        spprintf(true, false, " Length: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->len));
+        spprintf(true, true, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->check));
+        break;
+    }
 }
 
 void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
 {
-    spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
-    spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
-    spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->seq));
-    if (tcp_header->ack)
-        spprintf(true, false, " Acknowledgment Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->ack_seq));
-    spprintf(true, false, " Data Offset: %d\n", __tabs + 2, __tabs + 2, tcp_header->doff);
-    spprintf(true, false, " Flags: 0x%x\n", __tabs + 2, __tabs + 2, tcp_header->th_flags);
-    spprintf(true, false, " Window: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->window));
-    spprintf(true, tcp_header->urg ? false : true, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2,
-             ntohs(tcp_header->th_sum));
-    if (tcp_header->urg)
-        spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BBLU " TCP " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
+        spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
+        spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->seq));
+        break;
+    case COMPLETE:
+        spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
+        spprintf(true, false, " Destination Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->dest));
+        spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->seq));
+        if (tcp_header->ack)
+            spprintf(true, false, " Acknowledgment Number: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->ack_seq));
+        spprintf(true, false, " Data Offset: %d\n", __tabs + 2, __tabs + 2, tcp_header->doff);
+        spprintf(true, false, " Flags: 0x%x\n", __tabs + 2, __tabs + 2, tcp_header->th_flags);
+        spprintf(true, false, " Window: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->window));
+        spprintf(true, tcp_header->urg ? false : true, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2,
+                 ntohs(tcp_header->th_sum));
+        if (tcp_header->urg)
+            spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
+        break;
+    }
 }
 
 void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
 {
-    spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
-             ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
-    spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
-             ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
-    spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+    // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BYEL " Ethernet " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(false, false, BYEL "\n\nEthernet\n" CRESET, __tabs, 0);
+        spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
+                 ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
+        spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
+                 ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
+        break;
+    case COMPLETE:
+        spprintf(false, false, BYEL "\n\nEthernet\n" CRESET, __tabs, 0);
+        spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
+                 ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
+        spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
+                 ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
+        spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+        break;
+    }
 }
 
 void printf_ip_header(struct ip *ip_header, int __tabs)
 {
-    spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_v);
-    spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
-    // According to wikipedia ToS = DSCP but this seems to be blurry
-    spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
-    // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
-    spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
-    spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
-    spprintf(true, false, " ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
-    spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
-    spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
-    spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
-    // protocol numbers: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
-    spprintf(true, false, " Protocol ID: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_p);
-    spprintf(true, false, " Protocol name: %s\n", __tabs + 2, __tabs + 2,
-             IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
-    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
-    spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
-             inet_ntoa(ip_header->ip_dst));
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BGRN " IP " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BGRN " IP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
+        spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_dst));
+        break;
+    case COMPLETE:
+        spprintf(true, true, BGRN " IP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_v);
+        spprintf(true, false, " IHL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_hl);
+        // According to wikipedia ToS = DSCP but this seems to be blurry
+        spprintf(true, false, " ToS: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_tos);
+        // printf("\tDSCP: %d\n", IPTOS_DSCP(ip_header->ip_tos));
+        spprintf(true, false, " ECN: %d\n", __tabs + 2, __tabs + 2, IPTOS_ECN(ip_header->ip_tos));
+        spprintf(true, false, " Total Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_len));
+        spprintf(true, false, " ID: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_id));
+        spprintf(true, false, " Flags: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off) & IP_OFFMASK);
+        spprintf(true, false, " Fragment Offset: %d\n", __tabs + 2, __tabs + 2, ntohs(ip_header->ip_off));
+        spprintf(true, false, " TTL: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_ttl);
+        // protocol numbers: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
+        spprintf(true, false, " Protocol ID: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_p);
+        spprintf(true, false, " Protocol name: %s\n", __tabs + 2, __tabs + 2,
+                 IP_PROT_MAP[ip_header->ip_p] ? IP_PROT_MAP[ip_header->ip_p] : "Unknown");
+        spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, inet_ntoa(ip_header->ip_src));
+        spprintf(true, ip_header->ip_hl > 5 ? false : true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntoa(ip_header->ip_dst));
+        break;
+    }
 }
 
 void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
 {
     char addrstr[INET6_ADDRSTRLEN];
-    spprintf(true, true, BBLU " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
-    spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_vfc >> 4);
-    spprintf(true, false, " Traffic Class: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow >> 20);
-    spprintf(true, false, " Flow Label: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow & 0x000FFFFF);
-    spprintf(true, false, " Payload Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip6_header->ip6_plen));
-    spprintf(true, false, " Next Header: %d (%s)\n", __tabs + 2, __tabs + 2, ip6_header->ip6_nxt,
-             IP_PROT_MAP[ip6_header->ip6_nxt] ? IP_PROT_MAP[ip6_header->ip6_nxt] : "Unknown");
-    spprintf(true, false, " Hop Limit: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_hlim);
-    inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr));
-    spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
-    inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
-    spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BRED " IPv6 " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BRED " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr)));
+        spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2,
+                 inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr)));
+        break;
+    case COMPLETE:
+    {
+        spprintf(true, true, BRED " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_vfc >> 4);
+        spprintf(true, false, " Traffic Class: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow >> 20);
+        spprintf(true, false, " Flow Label: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_flow & 0x000FFFFF);
+        spprintf(true, false, " Payload Length: %d\n", __tabs + 2, __tabs + 2, ntohs(ip6_header->ip6_plen));
+        spprintf(true, false, " Next Header: %d (%s)\n", __tabs + 2, __tabs + 2, ip6_header->ip6_nxt,
+                 IP_PROT_MAP[ip6_header->ip6_nxt] ? IP_PROT_MAP[ip6_header->ip6_nxt] : "Unknown");
+        spprintf(true, false, " Hop Limit: %d\n", __tabs + 2, __tabs + 2, ip6_header->ip6_hlim);
+        inet_ntop(AF_INET6, &ip6_header->ip6_src, addrstr, sizeof(addrstr));
+        spprintf(true, false, " Source Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+        inet_ntop(AF_INET6, &ip6_header->ip6_dst, addrstr, sizeof(addrstr));
+        spprintf(true, true, " Destination Address: %s\n", __tabs + 2, __tabs + 2, addrstr);
+        break;
+    }
+    }
 }
 
 uint16_t dns_compression_replace(u_char *rdata, uint16_t rdlength, char *dns_header)

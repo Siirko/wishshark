@@ -30,10 +30,23 @@ size_t tcp_payload_len(const tshow_t packet)
 
 void printf_tcp_payload(const tshow_t packet, int __tabs, enum ProtocolTcpDependant protocol)
 {
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BRED " %s " CRESET, PROTOCOL_TCP_DEPENDANT_MAP[protocol]);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BRED " %s\n" CRESET, __tabs + 1, __tabs + 2, PROTOCOL_TCP_DEPENDANT_MAP[protocol]);
+        break;
+    case COMPLETE:
+        spprintf(true, true, BRED " %s\n" CRESET, __tabs + 1, __tabs + 2, PROTOCOL_TCP_DEPENDANT_MAP[protocol]);
+    }
+
+    if (verbose_level < COMPLETE)
+        return;
     size_t tcp_payload_size = tcp_payload_len(packet);
     if (tcp_payload_size > 0)
     {
-        spprintf(true, true, BBLU " %s\n" CRESET, __tabs + 1, __tabs + 2, PROTOCOL_TCP_DEPENDANT_MAP[protocol]);
         spprintf(true, false, " Payload size: %d\n", __tabs + 2, __tabs + 2, tcp_payload_size);
         u_char payload[tcp_payload_size];
         memset(payload, 0, tcp_payload_size);
