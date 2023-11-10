@@ -281,14 +281,20 @@ uint16_t dns_compression_replace(u_char *rdata, uint16_t rdlength, char *dns_hea
         if (rdata[i] == 0xc0)
         {
             uint16_t offset = ntohs(*((uint16_t *)(rdata + i))) & 0x3fff;
-            u_char *name = (u_char *)dns_header + offset;
-            int name_len = strlen((char *)name);
+            u_char *name;
+            int name_len = asprintf((char **)&name, "%s", (u_char *)dns_header + offset);
             new_rdata_len += name_len - 2;
             rdata = realloc(rdata, new_rdata_len + 1);
+            if (rdata == NULL)
+            {
+                fprintf(stderr, "Memory reallocation failed\n");
+                exit(EXIT_FAILURE);
+            }
             memmove(rdata + i + name_len - 2, rdata + i + 2, rdlength - i - 2);
             memcpy(rdata + i, name, name_len);
             i += name_len - 2;
             rdlength += name_len - 2;
+            free(name);
         }
     }
     return new_rdata_len;
@@ -340,7 +346,7 @@ void printf_dns_header(struct dnshdr *dns_header, int __tabs)
             uint16_t class = ntohs(*((uint16_t *)((char *)answer + sizeof(uint16_t) * 2)));
             uint32_t ttl = ntohl(*((uint32_t *)((char *)answer + sizeof(uint16_t) * 3)));
             uint16_t rdlength = ntohs(*((uint16_t *)((char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t))));
-            u_char *rdata = calloc(ntohs(rdlength) + 1, sizeof(u_char));
+            u_char *rdata = calloc(rdlength + 1, sizeof(u_char));
             memcpy(rdata, (char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t) + sizeof(uint16_t), rdlength);
             // find if there is a pointer in rdata and replace it with the actual name
             uint16_t rdlength_decompressed = dns_compression_replace(rdata, rdlength, (char *)dns_header);
@@ -357,12 +363,9 @@ void printf_dns_header(struct dnshdr *dns_header, int __tabs)
                 spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3, inet_ntoa(*(struct in_addr *)rdata));
                 break;
             case DNS_TYPE_AAAA:
-            {
-                char addrstr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, rdata, addrstr, sizeof(addrstr));
-                spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3, addrstr);
+                spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3,
+                         inet_ntop(AF_INET6, rdata, (char[INET6_ADDRSTRLEN]){0}, INET6_ADDRSTRLEN));
                 break;
-            }
             default:
             {
                 if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
