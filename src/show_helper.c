@@ -5,7 +5,7 @@
 #include "../include/protocol_map.h"
 #include <stdarg.h>
 #include <stdlib.h>
-void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
+void printf_bootp_vendor_complete(struct bootp *bootp_header, int __tabs)
 {
     uint8_t *vend_ptr = bootp_header->bp_vend;
     struct cmu_vend *cmu_vend = (struct cmu_vend *)vend_ptr;
@@ -116,7 +116,7 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
     }
 }
 
-void printf_bootp_header(struct bootp *bootp_header, int __tabs)
+void printf_bootp_header_complete(struct bootp *bootp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -154,7 +154,7 @@ void printf_bootp_header(struct bootp *bootp_header, int __tabs)
     }
 }
 
-void printf_arp_header(struct ether_arp *arp_header, int __tabs)
+void printf_arp_header_complete(struct ether_arp *arp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -233,9 +233,6 @@ void printf_arp_header(struct ether_arp *arp_header, int __tabs)
 //         break;
 //     }
 // }
-
-void printf_udp_header(struct udphdr *udp_header, int __tabs)
-{
     switch (verbose_level)
     {
     case CONCISE:
@@ -256,7 +253,7 @@ void printf_udp_header(struct udphdr *udp_header, int __tabs)
     }
 }
 
-void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
+void printf_tcp_header_complete(struct tcphdr *tcp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -287,7 +284,7 @@ void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
     }
 }
 
-void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
+void printf_ethernet_header_complete(const struct ether_header *ethernet_header, int __tabs)
 {
     // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
     switch (verbose_level)
@@ -313,7 +310,7 @@ void printf_ethernet_header(const struct ether_header *ethernet_header, int __ta
     }
 }
 
-void printf_ip_header(struct ip *ip_header, int __tabs)
+void printf_ip_header_complete(struct ip *ip_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -349,7 +346,7 @@ void printf_ip_header(struct ip *ip_header, int __tabs)
     }
 }
 
-void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
+void printf_ipv6_header_complete(struct ip6_hdr *ip6_header, int __tabs)
 {
     char addrstr[INET6_ADDRSTRLEN];
     switch (verbose_level)
@@ -410,7 +407,7 @@ uint16_t dns_compression_replace(u_char *rdata, uint16_t rdlength, char *dns_hea
     return new_rdata_len;
 }
 
-void printf_dns_header(struct dnshdr *dns_header, int __tabs)
+void printf_dns_header_complete(struct dnshdr *dns_header, int __tabs)
 {
     uint16_t flags_word = dns_header->recursion_desired | (dns_header->truncation << 1) |
                           (dns_header->authoritative_answer << 2) | (dns_header->opcode << 3) |
