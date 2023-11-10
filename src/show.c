@@ -12,18 +12,7 @@ void s_ethernet_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     struct ether_header *ethernet_header = (struct ether_header *)packet_body;
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_ethernet_header_concise(ethernet_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_ethernet_header_verbose(ethernet_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_ethernet_header_complete(ethernet_header, __tabs);
-        break;
-    }
+    printf_ethernet_header(ethernet_header, __tabs);
     switch (ntohs(ethernet_header->ether_type))
     {
     case ETHERTYPE_IP:
@@ -45,21 +34,12 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     const u_char *packet_body = packet.packet_body;
     // https://en.wikipedia.org/wiki/Internet_Protocol_version_4#Packet_structure
     struct ip *ip_header = (struct ip *)(packet_body + sizeof(struct ether_header));
-    switch (verbose_level)
+    printf_ip_header(ip_header, __tabs);
+    if (ip_header->ip_hl > 5)
     {
-    case CONCISE:
-        printf_ip_header_concise(ip_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_ip_header_verbose(ip_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_ip_header_complete(ip_header, __tabs);
-        break;
-    }
-    if (ip_header->ip_hl > 5 && verbose_level == COMPLETE)
         spprintf(true, false, " Options type: %d\n", __tabs + 2, __tabs + 2,
                  ((struct ip_timestamp *)(packet_body + sizeof(struct ether_header) + sizeof(struct ip)))->ipt_code);
+    }
 
     switch (ip_header->ip_p)
     {
@@ -80,18 +60,7 @@ void s_ip_packet(const tshow_t packet, int __tabs)
 void s_ipv6_packet(const tshow_t packet, int __tabs)
 {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *)(packet.packet_body + sizeof(struct ether_header));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_ipv6_header_concise(ip6_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_ipv6_header_verbose(ip6_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_ipv6_header_complete(ip6_header, __tabs);
-        break;
-    }
+    printf_ipv6_header(ip6_header, __tabs);
     switch (ip6_header->ip6_nxt)
     {
     case IPPROTO_TCP:
@@ -114,18 +83,7 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
     // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
     struct tcphdr *tcp_header = (struct tcphdr *)(packet_body + sizeof(struct ether_header) +
                                                   (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_tcp_header_concise(tcp_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_tcp_header_verbose(tcp_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_tcp_header_complete(tcp_header, __tabs);
-        break;
-    }
+    printf_tcp_header(tcp_header, __tabs);
     uint16_t tcp_port_source = ntohs(tcp_header->source);
     uint16_t tcp_port_dest = ntohs(tcp_header->dest);
     if (tcp_port_source == HTTP || tcp_port_dest == HTTP)
@@ -145,18 +103,7 @@ void s_udp_packet(const tshow_t packet, int __tabs)
     const u_char *packet_body = packet.packet_body;
     struct udphdr *udp_header = (struct udphdr *)(packet_body + sizeof(struct ether_header) +
                                                   (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_udp_header_concise(udp_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_udp_header_verbose(udp_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_udp_header_complete(udp_header, __tabs);
-        break;
-    }
+    printf_udp_header(udp_header, __tabs);
     if (ntohs(udp_header->source) == 67 || ntohs(udp_header->dest) == 67 || ntohs(udp_header->source) == 68 ||
         ntohs(udp_header->dest) == 68)
         s_bootp_packet(packet, __tabs + 1);
@@ -186,18 +133,7 @@ void s_arp_packet(const tshow_t packet, int __tabs)
 {
     const u_char *packet_body = packet.packet_body;
     struct ether_arp *arp_header = (struct ether_arp *)(packet_body + sizeof(struct ether_header));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_arp_header_concise(arp_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_arp_header_verbose(arp_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_arp_header_complete(arp_header, __tabs);
-        break;
-    }
+    printf_arp_header(arp_header, __tabs);
 }
 
 void s_bootp_packet(const tshow_t packet, int __tabs)
@@ -205,8 +141,7 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
     struct bootp *bootp_header =
         (struct bootp *)(packet.packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
     printf_bootp_header(bootp_header, __tabs);
-    if (verbose_level == COMPLETE)
-        printf_bootp_vendor(bootp_header, __tabs);
+    printf_bootp_vendor(bootp_header, __tabs);
 }
 
 void s_ftp_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, FTP); }
@@ -225,16 +160,5 @@ void s_dns_packet(const tshow_t packet, int __tabs)
     struct dnshdr *dns_header =
         (struct dnshdr *)(packet_body + sizeof(struct ether_header) +
                           (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)) + sizeof(struct udphdr));
-    switch (verbose_level)
-    {
-    case CONCISE:
-        printf_dns_header_concise(dns_header, __tabs);
-        break;
-    case VERBOSE:
-        printf_dns_header_verbose(dns_header, __tabs);
-        break;
-    case COMPLETE:
-        printf_dns_header_complete(dns_header, __tabs);
-        break;
-    }
+    printf_dns_header(dns_header, __tabs);
 }

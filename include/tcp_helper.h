@@ -42,7 +42,7 @@ void printf_tcp_payload(const tshow_t packet, int __tabs, enum ProtocolTcpDepend
         spprintf(true, true, BRED " %s\n" CRESET, __tabs + 1, __tabs + 2, PROTOCOL_TCP_DEPENDANT_MAP[protocol]);
     }
 
-    if (verbose_level < COMPLETE)
+    if (verbose_level < VERBOSE)
         return;
     size_t tcp_payload_size = tcp_payload_len(packet);
     if (tcp_payload_size > 0)
@@ -54,4 +54,6 @@ void printf_tcp_payload(const tshow_t packet, int __tabs, enum ProtocolTcpDepend
         nprint2print(tcp_payload_size - 1, payload);
         spprintf(true, true, " Payload: %s\n", __tabs + 2, __tabs + 2, payload);
     }
+    else
+        spprintf(true, false, " Payload size: %d\n", __tabs + 2, __tabs + 2, tcp_payload_size);
 }
