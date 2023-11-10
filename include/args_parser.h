@@ -24,13 +24,6 @@ static struct argp_option options[] = {
     {"verbosity", 'v', "<1..3>", 0, "Verbosity : 1 = Concise, 2 = Verbose, 3 = Complete", 0},
     {0}};
 
-enum VerboseLevel
-{
-    CONCISE = 1,
-    VERBOSE = 2,
-    COMPLETE = 3
-};
-
 /* Used by main to communicate with parse_opt. */
 typedef struct arguments
 {

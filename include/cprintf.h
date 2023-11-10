@@ -4,6 +4,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+enum VerboseLevel
+{
+    CONCISE = 1,
+    VERBOSE = 2,
+    COMPLETE = 3
+};
+
 typedef unsigned char u_char;
 
 #define CHK(op)                                                                                                        \

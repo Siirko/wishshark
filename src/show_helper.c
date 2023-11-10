@@ -5,7 +5,7 @@
 #include "../include/protocol_map.h"
 #include <stdarg.h>
 #include <stdlib.h>
-void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
+void printf_bootp_vendor_complete(struct bootp *bootp_header, int __tabs)
 {
     uint8_t *vend_ptr = bootp_header->bp_vend;
     struct cmu_vend *cmu_vend = (struct cmu_vend *)vend_ptr;
@@ -116,9 +116,11 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
     }
 }
 
-void printf_bootp_header(struct bootp *bootp_header, int __tabs)
+void printf_bootp_header_complete(struct bootp *bootp_header, int __tabs)
 {
-    spprintf(true, true, BBLU " BOOTP\n" CRESET, __tabs + 1, __tabs + 2);
+    // check if magic cookie is present
+    char *type = CHECK_MAGIC_COOKIE(bootp_header->bp_vend) ? "DHCP" : "BOOTP";
+    spprintf(true, true, BBLU " %s\n" CRESET, __tabs + 1, __tabs + 2, type);
     spprintf(true, false, " Opcode: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_op,
              bootp_header->bp_op == BOOTREQUEST ? "Request" : "Reply");
     spprintf(true, false, " HType: %d (%s)\n", __tabs + 2, __tabs + 2, bootp_header->bp_htype,
@@ -139,7 +141,7 @@ void printf_bootp_header(struct bootp *bootp_header, int __tabs)
     spprintf(true, false, " File: %s\n", __tabs + 2, __tabs + 2, bootp_header->bp_file);
 }
 
-void printf_arp_header(struct ether_arp *arp_header, int __tabs)
+void printf_arp_header_complete(struct ether_arp *arp_header, int __tabs)
 {
     spprintf(true, true, BBLU " ARP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Hardware type: %d\n", __tabs + 2, __tabs + 2, ntohs(arp_header->arp_hrd));
@@ -157,7 +159,7 @@ void printf_arp_header(struct ether_arp *arp_header, int __tabs)
              inet_ntoa(*(struct in_addr *)arp_header->arp_tpa));
 }
 
-void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
+void printf_icmp_type_complete(struct icmphdr *icmp_header, int __tabs)
 {
     spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs + 2,
              icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
@@ -198,7 +200,7 @@ void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
     }
 }
 
-void printf_udp_header(struct udphdr *udp_header, int __tabs)
+void printf_udp_header_complete(struct udphdr *udp_header, int __tabs)
 {
     spprintf(true, true, BBLU " UDP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->source));
@@ -207,7 +209,7 @@ void printf_udp_header(struct udphdr *udp_header, int __tabs)
     spprintf(true, true, " Checksum: %d\n", __tabs + 2, __tabs + 2, ntohs(udp_header->check));
 }
 
-void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
+void printf_tcp_header_complete(struct tcphdr *tcp_header, int __tabs)
 {
     spprintf(true, true, BBLU " TCP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Source Port: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->source));
@@ -224,7 +226,7 @@ void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
         spprintf(true, false, " Urgent Pointer: %d\n", __tabs + 2, __tabs + 2, ntohs(tcp_header->urg_ptr));
 }
 
-void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
+void printf_ethernet_header_complete(const struct ether_header *ethernet_header, int __tabs)
 {
     spprintf(false, false, " Destination MAC Address: %s\n", __tabs + 1, 1,
              ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
@@ -233,7 +235,7 @@ void printf_ethernet_header(const struct ether_header *ethernet_header, int __ta
     spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
 }
 
-void printf_ip_header(struct ip *ip_header, int __tabs)
+void printf_ip_header_complete(struct ip *ip_header, int __tabs)
 {
     spprintf(true, true, BBLU " IP\n" CRESET, __tabs + 1, __tabs + 2);
     spprintf(true, false, " Version: %d\n", __tabs + 2, __tabs + 2, ip_header->ip_v);
@@ -256,7 +258,7 @@ void printf_ip_header(struct ip *ip_header, int __tabs)
              inet_ntoa(ip_header->ip_dst));
 }
 
-void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
+void printf_ipv6_header_complete(struct ip6_hdr *ip6_header, int __tabs)
 {
     char addrstr[INET6_ADDRSTRLEN];
     spprintf(true, true, BBLU " IPv6\n" CRESET, __tabs + 1, __tabs + 2);
@@ -300,7 +302,7 @@ uint16_t dns_compression_replace(u_char *rdata, uint16_t rdlength, char *dns_hea
     return new_rdata_len;
 }
 
-void printf_dns_header(struct dnshdr *dns_header, int __tabs)
+void printf_dns_header_complete(struct dnshdr *dns_header, int __tabs)
 {
     uint16_t flags_word = dns_header->recursion_desired | (dns_header->truncation << 1) |
                           (dns_header->authoritative_answer << 2) | (dns_header->opcode << 3) |

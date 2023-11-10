@@ -65,6 +65,8 @@ struct bootp
         99, 130, 83, 99                                                                                                \
     }
 
+#define CHECK_MAGIC_COOKIE(a) ((a)[0] == 99 && (a)[1] == 130 && (a)[2] == 83 && (a)[3] == 99)
+
 /*
  * RFC1048 tag values used to specify what information is being supplied in
  * the vendor field of the packet.
