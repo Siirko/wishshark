@@ -25,6 +25,7 @@
         "stdbool.h": "c",
         "compare": "c",
         "cstdint": "c",
-        "show_helper.h": "c"
+        "show_helper.h": "c",
+        "typeinfo": "c"
     },
 }

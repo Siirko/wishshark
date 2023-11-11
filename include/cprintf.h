@@ -11,7 +11,6 @@ enum VerboseLevel
     COMPLETE = 3
 };
 
-
 extern enum VerboseLevel verbose_level;
 
 typedef unsigned char u_char;
@@ -21,6 +20,13 @@ typedef unsigned char u_char;
     {                                                                                                                  \
         if ((op) == -1)                                                                                                \
             chprintf(1, #op);                                                                                          \
+    } while (0)
+
+#define CHK_ALLOC(op, info)                                                                                            \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if ((op) == NULL)                                                                                              \
+            chprintf(1, __FILE__, __LINE__, info, #op);                                                                \
     } while (0)
 
 // eprintf can only be called through this macro
