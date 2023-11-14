@@ -473,12 +473,12 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             u_char mailbox[DNS_NAME_MAX_LEN] = {0};
 
             dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer), true);
-            size_t primary_ns_len = strlen(primary_ns);
+            // size_t primary_ns_len = strlen(primary_ns);
 
             uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
             uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
             dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding, true);
-            size_t mailbox_len = strlen(mailbox);
+            size_t mailbox_len = strlen((char *)mailbox);
 
             struct dnssoa *dnssoa = (struct dnssoa *)((char *)dnsanswer + sizeof(*dnsanswer) + padding + 2 +
                                                       (padding != 2 ? mailbox_len : 0));
@@ -490,6 +490,23 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->expire_limit));
             spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->minimum_ttl));
 
+            break;
+        }
+        default:
+        {
+            if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
+            {
+                u_char name[DNS_NAME_MAX_LEN] = {0};
+                dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer), false);
+                nprint2print(rdlength + 1, name);
+                for (size_t i = 0; i < rdlength; i++)
+                    printf("%c", name[i]);
+            }
+            // else
+            // {
+            //     for (int i = 0; i < rdlength_decompressed; i++)
+            //         printf("%02x ", rdata[i]);
+            // }
             break;
         }
         }
