@@ -26,6 +26,8 @@
         "compare": "c",
         "cstdint": "c",
         "show_helper.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "string.h": "c",
+        "string_view": "c"
     },
 }

@@ -46,6 +46,8 @@ struct __attribute__((__packed__)) dnssoa
 #define DNS_IS_COMPRESSED(x) (((x) & (0xc000)) == (0xc000))
 #define DNS_RESOLVE_OFFSET(x) ((x) & 0x3fff)
 
+#define DNS_NAME_MAX_LEN 256
+
 #define DNS_TYPE_A 1
 #define DNS_TYPE_NS 2
 #define DNS_TYPE_CNAME 5
@@ -54,26 +56,21 @@ struct __attribute__((__packed__)) dnssoa
 #define DNS_TYPE_TXT 16
 #define DNS_TYPE_AAAA 28
 
-static inline uint16_t dns_compression_resolve(u_char *rdata, uint16_t rdlength, char *dns_header)
+static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
 {
-    uint16_t new_rdata_len = rdlength;
-    for (int i = 0; i < rdlength; i++)
+    uint16_t label = ntohs(*(uint16_t *)answer);
+    if (label == 0)
+        dst[0] = '\0';
+    else if (DNS_IS_COMPRESSED(label))
     {
-        if (rdata[i] == 0xc0)
-        {
-            uint16_t offset = ntohs(*((uint16_t *)(rdata + i))) & 0x3fff;
-            u_char *name;
-            int name_len = asprintf((char **)&name, "%s", (u_char *)dns_header + offset);
-            new_rdata_len += name_len - 1;
-            rdata = realloc(rdata, new_rdata_len);
-            CHK_ALLOC(rdata, "realloc dns_compression_resolve");
-
-            memcpy(rdata + i + name_len + 1, rdata + i + 2, rdlength - i - 2);
-            memcpy(rdata + i, name, name_len + 1);
-            i += name_len;
-            rdlength += name_len - 1;
-            free(name);
-        }
+        uint16_t offset = DNS_RESOLVE_OFFSET(label);
+        dns_unpack(dns_header, dst, (char *)dns_header + offset);
     }
-    return new_rdata_len;
+    else
+    {
+        uint8_t label_len = *(uint8_t *)answer;
+        memcpy(dst, answer + 1, label_len);
+        dst[label_len] = '.';
+        dns_unpack(dns_header, dst + label_len + 1, answer + label_len + 1);
+    }
 }
