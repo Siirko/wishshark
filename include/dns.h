@@ -56,7 +56,7 @@ struct __attribute__((__packed__)) dnssoa
 #define DNS_TYPE_TXT 16
 #define DNS_TYPE_AAAA 28
 
-static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
+static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer, bool idk)
 {
     uint16_t label = ntohs(*(uint16_t *)answer);
     if (label == 0)
@@ -64,13 +64,16 @@ static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
     else if (DNS_IS_COMPRESSED(label))
     {
         uint16_t offset = DNS_RESOLVE_OFFSET(label);
-        dns_unpack(dns_header, dst, (char *)dns_header + offset);
+        dns_unpack(dns_header, dst, (char *)dns_header + offset, idk);
     }
     else
     {
         uint8_t label_len = *(uint8_t *)answer;
         memcpy(dst, answer + 1, label_len);
-        dst[label_len] = '.';
-        dns_unpack(dns_header, dst + label_len + 1, answer + label_len + 1);
+        if (idk)
+            dst[label_len] = '\0';
+        else
+            dst[label_len] = '.';
+        dns_unpack(dns_header, dst + label_len + 1, answer + label_len + 1, idk);
     }
 }

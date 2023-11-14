@@ -430,7 +430,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
     {
 
         u_char dns_name[DNS_NAME_MAX_LEN] = {0};
-        dns_unpack((char *)dns_header, dns_name, answer);
+        dns_unpack((char *)dns_header, dns_name, answer, false);
         // size_t dns_name_len = strlen((char *)dns_name);
 
         uint16_t label = ntohs(*(uint16_t *)answer);
@@ -472,16 +472,23 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             u_char primary_ns[DNS_NAME_MAX_LEN] = {0};
             u_char mailbox[DNS_NAME_MAX_LEN] = {0};
 
-            // dns_unpack(answer, primary_ns, answer);
-            // dns_unpack(answer, mailbox, answer);
+            dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer), true);
+            size_t primary_ns_len = strlen(primary_ns);
 
-            // struct dnssoa *dnssoa = (struct dnssoa *)((char *)primary_ns + (char *)mailbox + 4);
-            // spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
-            // spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3,
-            // ntohl(dnssoa->refresh_interval)); spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3,
-            // ntohl(dnssoa->retry_interval)); spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3,
-            // ntohl(dnssoa->expire_limit)); spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3,
-            // ntohl(dnssoa->minimum_ttl));
+            uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
+            uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
+            dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding, true);
+            size_t mailbox_len = strlen(mailbox);
+
+            struct dnssoa *dnssoa = (struct dnssoa *)((char *)dnsanswer + sizeof(*dnsanswer) + padding + 2 +
+                                                      (padding != 2 ? mailbox_len : 0));
+            spprintf(true, false, " Primary NS: %s\n", __tabs + 3, __tabs + 3, primary_ns);
+            spprintf(true, false, " Mailbox: %s\n", __tabs + 3, __tabs + 3, mailbox);
+            spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
+            spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->refresh_interval));
+            spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->retry_interval));
+            spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->expire_limit));
+            spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->minimum_ttl));
 
             break;
         }
