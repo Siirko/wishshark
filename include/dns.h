@@ -34,6 +34,15 @@ struct __attribute__((__packed__)) dnsanswer
     uint16_t rdlength;
 };
 
+struct __attribute__((__packed__)) dnssoa
+{
+    uint32_t serial;
+    uint32_t refresh_interval;
+    uint32_t retry_interval;
+    uint32_t expire_limit;
+    uint32_t minimum_ttl;
+};
+
 #define DNS_IS_COMPRESSED(x) (((x) & (0xc000)) == (0xc000))
 #define DNS_RESOLVE_OFFSET(x) ((x) & 0x3fff)
 
@@ -55,14 +64,14 @@ static inline uint16_t dns_compression_resolve(u_char *rdata, uint16_t rdlength,
             uint16_t offset = ntohs(*((uint16_t *)(rdata + i))) & 0x3fff;
             u_char *name;
             int name_len = asprintf((char **)&name, "%s", (u_char *)dns_header + offset);
-            new_rdata_len += name_len - 2;
-            rdata = realloc(rdata, new_rdata_len + 1);
+            new_rdata_len += name_len - 1;
+            rdata = realloc(rdata, new_rdata_len);
             CHK_ALLOC(rdata, "realloc dns_compression_resolve");
 
-            memmove(rdata + i + name_len - 2, rdata + i + 2, rdlength - i - 2);
-            memcpy(rdata + i, name, name_len);
-            i += name_len - 2;
-            rdlength += name_len - 2;
+            memcpy(rdata + i + name_len + 1, rdata + i + 2, rdlength - i - 2);
+            memcpy(rdata + i, name, name_len + 1);
+            i += name_len;
+            rdlength += name_len - 1;
             free(name);
         }
     }

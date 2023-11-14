@@ -427,7 +427,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
 {
     char *answer = (char *)dnsquery + sizeof(struct dnsquery);
     uint16_t rdlength;
-    for (uint16_t i = 0; i < n_answer; i++, answer += sizeof(struct dnsanswer) + rdlength)
+    for (uint16_t i = 0; i < 4 /*n_answer*/; i++, answer += sizeof(struct dnsanswer) + rdlength)
     {
         struct dnsanswer *dnsanswer = (struct dnsanswer *)((char *)answer);
         int name_len;
@@ -442,17 +442,23 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
         rdlength = ntohs(dnsanswer->rdlength);
         u_char *rdata = calloc(rdlength + 1, sizeof(u_char));
         CHK_ALLOC(rdata, "calloc printf_dns_answer");
-
         memcpy(rdata, (char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t) + sizeof(uint16_t), rdlength);
+
+        u_char *rdata_not_compressed = calloc(rdlength + 1, sizeof(u_char));
+        CHK_ALLOC(rdata_not_compressed, "calloc printf_dns_answer");
+        memcpy(rdata_not_compressed, (char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t) + sizeof(uint16_t),
+               rdlength);
+
         uint16_t rdlength_decompressed = dns_compression_resolve(rdata, rdlength, (char *)dns_header);
         nprint2print(name_len, dnsanswer_name);
-
+        deprintf("%d %d\n", rdlength_decompressed, name_len);
         spprintf(true, true, BBLU " DNS Answer %d\n" CRESET, __tabs + 3, __tabs + 2, i + 1);
         spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dnsanswer_name);
         spprintf(true, false, " Type: %ld\n", __tabs + 3, __tabs + 3, type);
         spprintf(true, false, " Class: %ld\n", __tabs + 3, __tabs + 3, class);
         spprintf(true, false, " TTL: %ds\n", __tabs + 3, __tabs + 3, ttl);
         spprintf(true, false, " RDLength: %ld\n", __tabs + 3, __tabs + 3, rdlength);
+
         switch (type)
         {
         case DNS_TYPE_A:
@@ -462,6 +468,32 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3,
                      inet_ntop(AF_INET6, rdata, (char[INET6_ADDRSTRLEN]){0}, INET6_ADDRSTRLEN));
             break;
+        case DNS_TYPE_SOA:
+        {
+
+            u_char *soa_data = calloc(rdlength + 1, sizeof(u_char));
+            memcpy(soa_data, rdata_not_compressed, rdlength);
+
+            uint16_t soa_data_len = dns_compression_resolve(soa_data, rdlength, (char *)dns_header);
+            u_char *primary_ns;
+            int primary_ns_len = asprintf((char **)&primary_ns, "%s", (char *)soa_data + 1);
+            spprintf(true, false, " Primary Name Server: %s\n", __tabs + 3, __tabs + 3, primary_ns);
+            free(primary_ns);
+
+            u_char *response_mailbox;
+            int response_mailbox_len =
+                asprintf((char **)&response_mailbox, "%s", (char *)soa_data + 1 + primary_ns_len + 2);
+            spprintf(true, false, " Response Mailbox: %s\n", __tabs + 3, __tabs + 3, response_mailbox);
+            free(response_mailbox);
+
+            struct dnssoa *dnssoa = (struct dnssoa *)((char *)soa_data + 2 + primary_ns_len + 2 + response_mailbox_len);
+            spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
+            spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->refresh_interval));
+            spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->retry_interval));
+            spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->expire_limit));
+            spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->minimum_ttl));
+            break;
+        }
         // and so on ....
         default:
         {
@@ -479,7 +511,8 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
         }
         }
 
-        free(rdata);
+        // free(rdata);
+        free(rdata_not_compressed);
         free(dnsanswer_name);
     }
 }
