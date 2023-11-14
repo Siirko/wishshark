@@ -431,7 +431,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
 
         u_char dns_name[DNS_NAME_MAX_LEN] = {0};
         dns_unpack((char *)dns_header, dns_name, answer);
-        size_t dns_name_len = strlen((char *)dns_name);
+        // size_t dns_name_len = strlen((char *)dns_name);
 
         uint16_t label = ntohs(*(uint16_t *)answer);
         uint8_t padding = DNS_IS_COMPRESSED(label) ? 0 : ((label >> 8) + 1);
@@ -444,9 +444,12 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
 
         // for (int i = 0; i < sizeof(*dnsanswer); i++)
         //     printf("%02x ", answer[i]);
-        // u_char *rdata = calloc(rdlength + 1, sizeof(u_char));
-        // CHK_ALLOC(rdata, "calloc printf_dns_answer");
-        // memcpy(rdata, (char *)answer + sizeof(uint16_t) * 3 + sizeof(uint32_t) + sizeof(uint16_t), rdlength);
+
+        u_char rdata[rdlength + 1];
+        memset(rdata, 0, rdlength + 1);
+        memcpy(rdata, (char *)dnsanswer + sizeof(*dnsanswer), rdlength);
+        // for (int i = 0; i < rdlength; i++)
+        //     printf("%02x ", rdata[i]);
 
         spprintf(true, true, BBLU " DNS Answer %d\n" CRESET, __tabs + 3, __tabs + 2, i + 1);
         spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dns_name);
@@ -454,6 +457,35 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
         spprintf(true, false, " Class: %ld\n", __tabs + 3, __tabs + 3, class);
         spprintf(true, false, " TTL: %ds\n", __tabs + 3, __tabs + 3, ttl);
         spprintf(true, false, " RDLength: %ld\n", __tabs + 3, __tabs + 3, rdlength);
+
+        switch (type)
+        {
+        case DNS_TYPE_A:
+            spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3, inet_ntoa(*(struct in_addr *)rdata));
+            break;
+        case DNS_TYPE_AAAA:
+            spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3,
+                     inet_ntop(AF_INET6, rdata, (char[INET6_ADDRSTRLEN]){0}, INET6_ADDRSTRLEN));
+            break;
+        case DNS_TYPE_SOA:
+        {
+            u_char primary_ns[DNS_NAME_MAX_LEN] = {0};
+            u_char mailbox[DNS_NAME_MAX_LEN] = {0};
+
+            // dns_unpack(answer, primary_ns, answer);
+            // dns_unpack(answer, mailbox, answer);
+
+            // struct dnssoa *dnssoa = (struct dnssoa *)((char *)primary_ns + (char *)mailbox + 4);
+            // spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
+            // spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3,
+            // ntohl(dnssoa->refresh_interval)); spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3,
+            // ntohl(dnssoa->retry_interval)); spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3,
+            // ntohl(dnssoa->expire_limit)); spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3,
+            // ntohl(dnssoa->minimum_ttl));
+
+            break;
+        }
+        }
 
         answer += sizeof(*dnsanswer) + rdlength + padding;
     }
