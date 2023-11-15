@@ -29,6 +29,13 @@ typedef unsigned char u_char;
             chprintf(1, __FILE__, __LINE__, info, #op);                                                                \
     } while (0)
 
+#define CHK_PCAP(op, handle)                                                                                           \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if ((op) < 0)                                                                                                  \
+            chprintf(1, __FILE__, __LINE__, pcap_geterr(handle), #op);                                                 \
+    } while (0)
+
 // eprintf can only be called through this macro
 #define ERR_MSG(msg)                                                                                                   \
     do                                                                                                                 \

@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     else if (strcmp(arguments.interface, "") != 0 && strcmp(arguments.input_file, "") == 0)
         handle = open_pcap_handle(arguments.interface);
 
-    pcap_loop(handle, -1, packet_handler_callback, NULL);
+    CHK_PCAP(pcap_loop(handle, -1, packet_handler_callback, NULL), handle);
     pcap_close(handle);
     return 0;
 }
