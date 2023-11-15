@@ -7,6 +7,7 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct arguments arguments;
 
@@ -28,14 +29,14 @@ int main(int argc, char **argv)
     bpf_u_int32 net, mask = 0;
     char *dev;
     pcap_t *handle;
-    if (arguments.interface == "" && arguments.input_file == "")
+    if (strcmp(arguments.interface, "") == 0 && strcmp(arguments.input_file, "") == 0)
     {
         dev = get_device_name(&net, &mask);
         handle = open_pcap_handle(dev);
     }
-    else if (arguments.interface == "" && arguments.input_file != "")
+    else if (strcmp(arguments.interface, "") == 0 && strcmp(arguments.input_file, "") != 0)
         handle = open_pcap_handle_offline(arguments.input_file);
-    else if (arguments.interface != "" && arguments.input_file == "")
+    else if (strcmp(arguments.interface, "") != 0 && strcmp(arguments.input_file, "") == 0)
         handle = open_pcap_handle(arguments.interface);
 
     pcap_loop(handle, -1, packet_handler_callback, NULL);
