@@ -5,7 +5,7 @@
 #include "../include/protocol_map.h"
 #include <stdarg.h>
 #include <stdlib.h>
-void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
+void sh_bootp_vendor(struct bootp *bootp_header, int __tabs)
 {
     uint8_t *vend_ptr = bootp_header->bp_vend;
     struct cmu_vend *cmu_vend = (struct cmu_vend *)vend_ptr;
@@ -16,12 +16,12 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
     for (; *vend_ptr != 0xff;)
     {
         uint8_t tag = *vend_ptr;
-        if (tag == 0) // Padding
+        if (tag == 0)
         {
             spprintf(true, true, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
                      BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
             vend_ptr++;
-            continue;
+            continue; // we skip padding
         }
         uint8_t len = *(++vend_ptr);
         u_char value[len + 1];
@@ -116,7 +116,7 @@ void printf_bootp_vendor(struct bootp *bootp_header, int __tabs)
     }
 }
 
-void printf_bootp_header(struct bootp *bootp_header, int __tabs)
+void sh_bootp_header(struct bootp *bootp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -154,7 +154,7 @@ void printf_bootp_header(struct bootp *bootp_header, int __tabs)
     }
 }
 
-void printf_arp_header(struct ether_arp *arp_header, int __tabs)
+void sh_arp_header(struct ether_arp *arp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -192,49 +192,7 @@ void printf_arp_header(struct ether_arp *arp_header, int __tabs)
     }
 }
 
-// void printf_icmp_type(struct icmphdr *icmp_header, int __tabs)
-// {
-//     spprintf(true, icmp_header->type > NR_ICMP_TYPES ? true : false, " Control message: %s\n", __tabs + 2, __tabs +
-//     2,
-//              icmp_header->type > NR_ICMP_TYPES ? "Unknown" : ICMP_TYPE_MAP[icmp_header->type]);
-//     switch (icmp_header->type)
-//     {
-//     case ICMP_ECHOREPLY:
-//         spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
-//         spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
-//         break;
-//     case ICMP_DEST_UNREACH:
-//         break;
-//     case ICMP_SOURCE_QUENCH:
-//         break;
-//     case ICMP_REDIRECT:
-//         break;
-//     case ICMP_ECHO:
-//         spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
-//         spprintf(true, true, " Sequence Number: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.sequence));
-//         break;
-//     case ICMP_TIME_EXCEEDED:
-//         break;
-//     case ICMP_PARAMETERPROB:
-//         break;
-//     case ICMP_TIMESTAMP:
-//         break;
-//     case ICMP_TIMESTAMPREPLY:
-//         break;
-//     case ICMP_INFO_REQUEST:
-//         break;
-//     case ICMP_INFO_REPLY:
-//         break;
-//     case ICMP_ADDRESS:
-//         break;
-//     case ICMP_ADDRESSREPLY:
-//         break;
-//     default:
-//         break;
-//     }
-// }
-
-void printf_udp_header(struct udphdr *udp_header, int __tabs)
+void sh_udp_header(struct udphdr *udp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -256,7 +214,7 @@ void printf_udp_header(struct udphdr *udp_header, int __tabs)
     }
 }
 
-void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
+void sh_tcp_header(struct tcphdr *tcp_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -287,7 +245,7 @@ void printf_tcp_header(struct tcphdr *tcp_header, int __tabs)
     }
 }
 
-void printf_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
+void sh_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
 {
     // https://en.wikipedia.org/wiki/Ethernet_frame#Structure
     switch (verbose_level)
@@ -313,7 +271,7 @@ void printf_ethernet_header(const struct ether_header *ethernet_header, int __ta
     }
 }
 
-void printf_ip_header(struct ip *ip_header, int __tabs)
+void sh_ip_header(struct ip *ip_header, int __tabs)
 {
     switch (verbose_level)
     {
@@ -349,7 +307,7 @@ void printf_ip_header(struct ip *ip_header, int __tabs)
     }
 }
 
-void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
+void sh_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
 {
     char addrstr[INET6_ADDRSTRLEN];
     switch (verbose_level)
@@ -385,7 +343,7 @@ void printf_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
 
 void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnshdr *dns_header, int __tabs);
 
-void printf_dns_header(struct dnshdr *dns_header, int __tabs)
+void sh_dns_header(struct dnshdr *dns_header, int __tabs)
 {
     if (verbose_level <= COMPLETE && verbose_level >= VERBOSE)
     {
@@ -442,14 +400,9 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
         uint32_t ttl = ntohl(dnsanswer->ttl);
         uint16_t rdlength = ntohs(dnsanswer->rdlength);
 
-        // for (int i = 0; i < sizeof(*dnsanswer); i++)
-        //     printf("%02x ", answer[i]);
-
         u_char rdata[rdlength + 1];
         memset(rdata, 0, rdlength + 1);
         memcpy(rdata, (char *)dnsanswer + sizeof(*dnsanswer), rdlength);
-        // for (int i = 0; i < rdlength; i++)
-        //     printf("%02x ", rdata[i]);
 
         spprintf(true, true, BBLU " DNS Answer %d\n" CRESET, __tabs + 3, __tabs + 2, i + 1);
         spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dns_name);
@@ -473,7 +426,6 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             u_char mailbox[DNS_NAME_MAX_LEN] = {0};
 
             dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer));
-            // size_t primary_ns_len = strlen(primary_ns);
 
             uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
             uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
