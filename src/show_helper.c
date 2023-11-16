@@ -430,7 +430,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
     {
 
         u_char dns_name[DNS_NAME_MAX_LEN] = {0};
-        dns_unpack((char *)dns_header, dns_name, answer, false);
+        dns_unpack((char *)dns_header, dns_name, answer);
         // size_t dns_name_len = strlen((char *)dns_name);
 
         uint16_t label = ntohs(*(uint16_t *)answer);
@@ -472,12 +472,12 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             u_char primary_ns[DNS_NAME_MAX_LEN] = {0};
             u_char mailbox[DNS_NAME_MAX_LEN] = {0};
 
-            dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer), true);
+            dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer));
             // size_t primary_ns_len = strlen(primary_ns);
 
             uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
             uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
-            dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding, true);
+            dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding);
             size_t mailbox_len = strlen((char *)mailbox);
 
             struct dnssoa *dnssoa = (struct dnssoa *)((char *)dnsanswer + sizeof(*dnsanswer) + padding + 2 +
@@ -497,7 +497,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
             {
                 u_char name[DNS_NAME_MAX_LEN] = {0};
-                dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer), false);
+                dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer));
                 spprintf(true, true, " Name: %s\n", __tabs + 3, __tabs + 3, name);
             }
             break;
