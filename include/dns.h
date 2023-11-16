@@ -59,8 +59,13 @@ struct __attribute__((__packed__)) dnssoa
 static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer, bool idk)
 {
     uint16_t label = ntohs(*(uint16_t *)answer);
+    // static uint8_t len = 0;
     if (label == 0)
+    {
         dst[0] = '\0';
+        // deprintf("len -> %d\n", len);
+        // len = 0;
+    }
     else if (DNS_IS_COMPRESSED(label))
     {
         uint16_t offset = DNS_RESOLVE_OFFSET(label);
@@ -69,11 +74,11 @@ static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer,
     else
     {
         uint8_t label_len = *(uint8_t *)answer;
+        if (label_len == 0)
+            return;
         memcpy(dst, answer + 1, label_len);
-        if (idk)
-            dst[label_len] = '\0';
-        else
-            dst[label_len] = '.';
+        // len += label_len;
+        dst[label_len] = '.';
         dns_unpack(dns_header, dst + label_len + 1, answer + label_len + 1, idk);
     }
 }

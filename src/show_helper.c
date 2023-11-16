@@ -498,15 +498,8 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
             {
                 u_char name[DNS_NAME_MAX_LEN] = {0};
                 dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer), false);
-                nprint2print(rdlength + 1, name);
-                for (size_t i = 0; i < rdlength; i++)
-                    printf("%c", name[i]);
+                spprintf(true, true, " Name: %s\n", __tabs + 3, __tabs + 3, name);
             }
-            // else
-            // {
-            //     for (int i = 0; i < rdlength_decompressed; i++)
-            //         printf("%02x ", rdata[i]);
-            // }
             break;
         }
         }
