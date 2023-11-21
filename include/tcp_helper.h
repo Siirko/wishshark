@@ -2,17 +2,19 @@
 #include "cprintf.h"
 #include "show.h"
 
+// X macros would be better here
 enum ProtocolTcpDependant
 {
     HTTP = 80,
     FTP = 21,
+    TELNET = 23,
     SMTP = 25,
     POP = 110,
     IMAP = 143,
 };
 
 static const char *PROTOCOL_TCP_DEPENDANT_MAP[] = {
-    [HTTP] = "HTTP", [FTP] = "FTP", [SMTP] = "SMTP", [POP] = "POP", [IMAP] = "IMAP",
+    [HTTP] = "HTTP", [FTP] = "FTP", [SMTP] = "SMTP", [POP] = "POP", [IMAP] = "IMAP", [TELNET] = "TELNET",
 };
 
 size_t tcp_payload_len(const tshow_t packet)

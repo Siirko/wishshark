@@ -4,6 +4,7 @@
 #include "../include/cprintf.h"
 #include "../include/show_helper.h"
 #include "../include/tcp_helper.h"
+#include "../include/telnet.h"
 #include "../include/udp_helper.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -158,4 +159,44 @@ void s_icmp_packet(const tshow_t packet, int __tabs)
     sh_icmp_header(icmp_header, __tabs);
 }
 
-void s_telnet_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, TELNET); }
+void s_telnet_packet(const tshow_t packet, int __tabs)
+{
+    const u_char *packet_body = packet.packet_body;
+    size_t tcp_payload_size = tcp_payload_len(packet);
+    if (tcp_payload_size > 0)
+    {
+        u_char payload[tcp_payload_size];
+        memset(payload, 0, tcp_payload_size);
+        memcpy(payload, packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size);
+        spprintf(true, true, " TELNET\n", __tabs + 1, __tabs + 2);
+        if (verbose_level == CONCISE)
+            return;
+        if (payload[0] == IAC)
+        {
+            for (size_t i = 1; i < tcp_payload_size; i++)
+            {
+                if (i + 1 < tcp_payload_size)
+                {
+                    const char *cmd = TELNET_MAP[payload[i]];
+                    const char *opt = TELNET_MAP[payload[i + 1]];
+                    if (cmd && opt)
+                    {
+                        spprintf(true, i + 1 < tcp_payload_size ? false : true, " %s : %s\n", __tabs + 2, __tabs + 2,
+                                 cmd, opt);
+                        i += 2;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (tcp_payload_size > 1)
+            {
+                nprint2print(tcp_payload_size, payload);
+                spprintf(true, true, "Data: %s\n", __tabs + 2, __tabs + 2, payload);
+            }
+            else if (tcp_payload_size == 1)
+                spprintf(true, true, "Data: %c\n", __tabs + 2, __tabs + 2, payload[0]);
+        }
+    }
+}

@@ -63,10 +63,9 @@ const char *BOOTP_CLIENT_ID_TYPE_MAP[] = {
     [BOOTP_CLIENT_ID_TYPE_MAC] = "MAC",
 };
 
-// Could've been simplier with X macros, but didn't want to bother
+// Could've been simplier with X macros (see telnet.h to give you an idea), but didn't want to bother
 // this code is not mine, I just want to make it work
 
-// create map with TAG defines associated with a string
 const char *BOOTP_TAG_MAP[] = {
     [TAG_PAD] = "PAD",
     [TAG_SUBNET_MASK] = "Subnet Mask",
