@@ -28,3 +28,5 @@ void sh_bootp_header(struct bootp *bootp_header, int __tabs);
 void sh_bootp_vendor(struct bootp *bootp_header, int __tabs);
 
 void sh_dns_header(struct dnshdr *dns_header, int __tabs);
+
+void sh_icmp_header(struct icmphdr *icmp_header, int __tabs);

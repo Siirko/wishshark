@@ -50,6 +50,9 @@ void s_ip_packet(const tshow_t packet, int __tabs)
     case IPPROTO_UDP:
         s_udp_packet(packet, __tabs + 1);
         break;
+    case IPPROTO_ICMP:
+        s_icmp_packet(packet, __tabs + 1);
+        break;
     default:
         break;
     }
@@ -96,6 +99,8 @@ void s_tcp_packet(const tshow_t packet, int __tabs)
         s_imap_packet(packet, __tabs + 1);
     if (ntohs(tcp_port_source) == DNS || ntohs(tcp_port_dest) == DNS)
         s_dns_packet(packet, __tabs + 1);
+    if (tcp_port_source == TELNET || tcp_port_dest == TELNET)
+        s_telnet_packet(packet, __tabs + 1);
 }
 
 void s_udp_packet(const tshow_t packet, int __tabs)
@@ -144,3 +149,13 @@ void s_dns_packet(const tshow_t packet, int __tabs)
                           (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)) + sizeof(struct udphdr));
     sh_dns_header(dns_header, __tabs);
 }
+
+void s_icmp_packet(const tshow_t packet, int __tabs)
+{
+    const u_char *packet_body = packet.packet_body;
+    struct icmphdr *icmp_header = (struct icmphdr *)(packet_body + sizeof(struct ether_header) +
+                                                     (packet.is_ipv6 ? sizeof(struct ip6_hdr) : sizeof(struct ip)));
+    sh_icmp_header(icmp_header, __tabs);
+}
+
+void s_telnet_packet(const tshow_t packet, int __tabs) { printf_tcp_payload(packet, __tabs, TELNET); }

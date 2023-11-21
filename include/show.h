@@ -46,3 +46,7 @@ void s_pop_packet(const tshow_t packet, int __tabs);
 void s_smtp_packet(const tshow_t packet, int __tabs);
 
 void s_ftp_packet(const tshow_t packet, int __tabs);
+
+void s_icmp_packet(const tshow_t packet, int __tabs);
+
+void s_telnet_packet(const tshow_t packet, int __tabs);

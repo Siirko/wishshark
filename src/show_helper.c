@@ -266,7 +266,7 @@ void sh_ethernet_header(const struct ether_header *ethernet_header, int __tabs)
                  ether_ntoa((struct ether_addr *)ethernet_header->ether_dhost));
         spprintf(false, false, " Source MAC Address: %s\n", __tabs + 1, 1,
                  ether_ntoa((struct ether_addr *)ethernet_header->ether_shost), __tabs + 1);
-        spprintf(false, true, " Type: %d\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
+        spprintf(false, true, " Type: 0x%02x\n", __tabs + 1, 1, ntohs(ethernet_header->ether_type));
         break;
     }
 }
@@ -457,5 +457,54 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
         }
 
         answer += sizeof(*dnsanswer) + rdlength + padding;
+    }
+}
+
+void sh_icmp_header(struct icmphdr *icmp_header, int __tabs)
+{
+    switch (verbose_level)
+    {
+    case CONCISE:
+        printf(BMAG " ICMP " CRESET);
+        break;
+    case VERBOSE:
+        spprintf(true, true, BMAG " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Type: %d (%s)\n", __tabs + 2, __tabs + 2, icmp_header->type,
+                 ICMP_TYPE_MAP[icmp_header->type] ? ICMP_TYPE_MAP[icmp_header->type] : "Unknown");
+        spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
+        break;
+    case COMPLETE:
+        spprintf(true, true, BMAG " ICMP\n" CRESET, __tabs + 1, __tabs + 2);
+        spprintf(true, false, " Type: %d (%s)\n", __tabs + 2, __tabs + 2, icmp_header->type,
+                 ICMP_TYPE_MAP[icmp_header->type] ? ICMP_TYPE_MAP[icmp_header->type] : "Unknown");
+        spprintf(true, false, " Code: %d\n", __tabs + 2, __tabs + 2, icmp_header->code);
+        spprintf(true, false, " Checksum: 0x%x\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->checksum));
+        // show echo or gateway or frag
+        switch (icmp_header->type)
+        {
+        case ICMP_ECHO:
+        case ICMP_ECHOREPLY:
+        {
+            spprintf(true, false, " Identifier: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.echo.id));
+            spprintf(true, false, " Sequence Number: %d\n", __tabs + 2, __tabs + 2,
+                     ntohs(icmp_header->un.echo.sequence));
+            // show content
+            spprintf(true, true, " Data: %s\n", __tabs + 2, __tabs + 2, (char *)icmp_header + sizeof(*icmp_header));
+            break;
+        }
+        case ICMP_DEST_UNREACH:
+        {
+            spprintf(true, false, " Unused: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.gateway));
+            break;
+        }
+        case ICMP_TIME_EXCEEDED:
+        {
+            spprintf(true, false, " Unused: %d\n", __tabs + 2, __tabs + 2, ntohs(icmp_header->un.frag.mtu));
+            break;
+        }
+            // and so on ...
+        }
+
+        break;
     }
 }
