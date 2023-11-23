@@ -104,6 +104,7 @@ void sh_bootp_vendor(struct bootp *bootp_header, int __tabs)
             spprintf(true, true, " Value: %d\n", __tabs + 2, __tabs + 3, ntohs(*(uint16_t *)value));
             break;
         }
+        // and so on...
         default:
         {
             char hex_value[len * 2 + 1];
@@ -444,6 +445,7 @@ void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnsh
 
             break;
         }
+        // and so on ...
         default:
         {
             if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
