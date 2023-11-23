@@ -165,38 +165,60 @@ void s_telnet_packet(const tshow_t packet, int __tabs)
     size_t tcp_payload_size = tcp_payload_len(packet);
     if (tcp_payload_size > 0)
     {
+        spprintf(true, true, BWHT " TELNET\n" CRESET, __tabs + 1, __tabs + 2);
+        if (verbose_level == CONCISE)
+            return;
         u_char payload[tcp_payload_size];
         memset(payload, 0, tcp_payload_size);
         memcpy(payload, packet_body + packet.packet_header->len - tcp_payload_size, tcp_payload_size);
-        spprintf(true, true, " TELNET\n", __tabs + 1, __tabs + 2);
-        if (verbose_level == CONCISE)
-            return;
-        if (payload[0] == IAC)
+        for (size_t i = 0; i < tcp_payload_size; i++)
         {
-            for (size_t i = 1; i < tcp_payload_size; i++)
+            if (payload[i] == IAC)
             {
+                const char *cmd;
+                const char *opt;
                 if (i + 1 < tcp_payload_size)
                 {
-                    const char *cmd = TELNET_MAP[payload[i]];
-                    const char *opt = TELNET_MAP[payload[i + 1]];
-                    if (cmd && opt)
+                    cmd = TELNET_MAP[payload[i + 1]];
+                    if (payload[i + 1] == SE)
                     {
-                        spprintf(true, i + 1 < tcp_payload_size ? false : true, " %s : %s\n", __tabs + 2, __tabs + 2,
-                                 cmd, opt);
+                        spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd);
+                        continue;
+                    }
+                }
+                if (i + 2 < tcp_payload_size)
+                {
+                    opt = TELNET_MAP[payload[i + 2]];
+                    if (payload[i + 1] == SB && opt)
+                    {
+                        spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd, opt);
+                        i += 2;
+                        u_char buf[BUF_SUBOPT] = {0};
+                        int j = 0;
+                        for (++i; i < tcp_payload_size && (payload[i] != IAC && payload[i + 1] != SE); i++, j++)
+                            sprintf((char *)buf + j * 2, "%02X", payload[i]);
+                        if (j > BUF_SUBOPT)
+                            buf[BUF_SUBOPT - 1] = '\0';
+                        if (j > 0 && verbose_level == COMPLETE)
+                            spprintf(true, true, " Option data : %s\n", __tabs + 2, __tabs + 2, buf);
+                        spprintf(true, true, " %s\n", __tabs + 2, __tabs + 2, "SE");
+                    }
+                    else if (cmd && opt)
+                    {
+                        spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd, opt);
                         i += 2;
                     }
                 }
             }
-        }
-        else
-        {
-            if (tcp_payload_size > 1)
+            else
             {
-                nprint2print(tcp_payload_size, payload);
-                spprintf(true, true, "Data: %s\n", __tabs + 2, __tabs + 2, payload);
+                u_char buf[tcp_payload_size];
+                memset(buf, 0, tcp_payload_size);
+                for (; i < tcp_payload_size && payload[i] != IAC; i++)
+                    buf[i] = isprint(payload[i]) ? payload[i] : '.';
+                buf[i] = '\0';
+                spprintf(true, true, " data: %s\n", __tabs + 2, __tabs + 2, buf);
             }
-            else if (tcp_payload_size == 1)
-                spprintf(true, true, "Data: %c\n", __tabs + 2, __tabs + 2, payload[0]);
         }
     }
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define BUF_SUBOPT 1024
 
 #define IAC 0xFF
 #define DONT 0xFE
