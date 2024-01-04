@@ -37,6 +37,6 @@ $ ./bin/wishshark -o ./samples/...
 
 ### With Interface
 ```
-$ ./bin/wishsark -i yourinterfacename
+$ sudo ./bin/wishsark -i yourinterfacename
 ```
 
