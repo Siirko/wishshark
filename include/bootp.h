@@ -418,3 +418,37 @@ static inline void bootp_tag_display(uint8_t tag, uint8_t len, u_char *value, in
     }
     }
 }
+
+static inline void bootp_vendor_show(uint8_t *vend_ptr, int __tabs)
+{
+    for (; *vend_ptr != 0xff;)
+    {
+        uint8_t tag = *vend_ptr;
+        if (tag == 0)
+        {
+            spprintf(true, true, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
+                     BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
+            vend_ptr++;
+            continue; // we skip padding
+        }
+        uint8_t len = *(++vend_ptr);
+        u_char value[len + 1];
+        memset(value, 0, len + 1);
+        memcpy(value, ++vend_ptr, len);
+        vend_ptr += len;
+        spprintf(true, false, " Tag: %d (%s)\n", __tabs + 2, __tabs + 3, tag,
+                 BOOTP_TAG_MAP[tag] ? BOOTP_TAG_MAP[tag] : "Unknown");
+        spprintf(true, false, " Len: %d\n", __tabs + 2, __tabs + 3, len);
+        if (tag == TAG_IP_LEASE || tag == TAG_RENEWAL_TIME || tag == TAG_REBIND_TIME)
+        {
+            spprintf(true, true, " Value: %ds\n", __tabs + 2, __tabs + 3, ntohl(*(uint32_t *)value));
+            continue;
+        }
+        if (tag == TAG_SUBNET_MASK || tag == TAG_GATEWAY || tag == TAG_SERVER_ID)
+        {
+            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
+            continue;
+        }
+        bootp_tag_display(tag, len, value, __tabs);
+    }
+}
