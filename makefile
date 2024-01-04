@@ -1,4 +1,4 @@
-CC ?= gcc
+CC := gcc
 CFLAGS ?= -Wextra -Wall -D _GNU_SOURCE -g
 LDLIBS ?= -lm -lpcap
 
@@ -31,3 +31,4 @@ $(OBJECTS): $(OBJ_PATH)/%.o : $(SRC_PATH)/%.c
 clean:
 	rm -fr $(OBJ_PATH)
 	rm -fr $(BIN_PATH)
+	

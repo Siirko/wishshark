@@ -23,7 +23,13 @@
  * without express or implied warranty.
  */
 #pragma once
+#include "../include/cprintf.h"
 #include <arpa/inet.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <string.h>
 struct bootp
 {
     u_int8_t bp_op;           /* packet opcode type */
@@ -234,3 +240,181 @@ struct cmu_vend
 #define BOOTP_HTYPE_FRELAY 15
 #define BOOTP_HTYPE_ATM 16
 #define BOOTP_HTYPE_HDLC 17
+
+static const char *BOOTP_DHCP_MESSAGE_MAP[] = {
+    [DHCPDISCOVER] = "DHCP Discover", [DHCPOFFER] = "DHCP Offer",   [DHCPREQUEST] = "DHCP Request",
+    [DHCPDECLINE] = "DHCP Decline",   [DHCPACK] = "DHCP ACK",       [DHCPNAK] = "DHCP NAK",
+    [DHCPRELEASE] = "DHCP Release",   [DHCPINFORM] = "DHCP Inform",
+};
+
+#pragma GCC diagnostic ignored "-Wunused-variable"
+static const char *BOOTP_HTYPE_MAP[] = {
+    [BOOTP_HTYPE_ETHERNET] = "Ethernet",  [BOOTP_HTYPE_IEEE802] = "IEEE 802 Networks", [BOOTP_HTYPE_ARCNET] = "ARCENT",
+    [BOOTP_HTYPE_FRELAY] = "Frame Relay", [BOOTP_HTYPE_ATM] = "Async Transfer Mode",   [BOOTP_HTYPE_HDLC] = "HDLC",
+};
+#pragma GCC diagnostic pop
+
+static const char *BOOTP_CLIENT_ID_TYPE_MAP[] = {
+    [BOOTP_CLIENT_ID_TYPE_ASCII] = "ASCII",
+    [BOOTP_CLIENT_ID_TYPE_HEX] = "Hex",
+    [BOOTP_CLIENT_ID_TYPE_MAC] = "MAC",
+};
+
+// Could've been simplier with X macros (see telnet.h to give you an idea), but didn't want to bother
+// this code is not mine, I just want to make it work
+
+static const char *BOOTP_TAG_MAP[] = {
+    [TAG_PAD] = "PAD",
+    [TAG_SUBNET_MASK] = "Subnet Mask",
+    [TAG_TIME_OFFSET] = "Time Offset",
+    [TAG_GATEWAY] = "Gateway",
+    [TAG_TIME_SERVER] = "Time Server",
+    [TAG_NAME_SERVER] = "Name Server",
+    [TAG_DOMAIN_SERVER] = "Domain Server",
+    [TAG_LOG_SERVER] = "Log Server",
+    [TAG_COOKIE_SERVER] = "Cookie Server",
+    [TAG_LPR_SERVER] = "LPR Server",
+    [TAG_IMPRESS_SERVER] = "Impress Server",
+    [TAG_RLP_SERVER] = "RLP Server",
+    [TAG_HOSTNAME] = "Hostname",
+    [TAG_BOOTSIZE] = "Bootsize",
+    [TAG_END] = "End",
+    [TAG_DUMPPATH] = "Dump Path",
+    [TAG_DOMAINNAME] = "Domain Name",
+    [TAG_SWAP_SERVER] = "Swap Server",
+    [TAG_ROOTPATH] = "Root Path",
+    [TAG_EXTPATH] = "Ext Path",
+    [TAG_IP_FORWARD] = "IP Forward",
+    [TAG_NL_SRCRT] = "NL Srcrt",
+    [TAG_PFILTERS] = "P Filters",
+    [TAG_REASS_SIZE] = "Reass Size",
+    [TAG_DEF_TTL] = "Def TTL",
+    [TAG_MTU_TIMEOUT] = "MTU Timeout",
+    [TAG_MTU_TABLE] = "MTU Table",
+    [TAG_INT_MTU] = "Int MTU",
+    [TAG_LOCAL_SUBNETS] = "Local Subnets",
+    [TAG_BROAD_ADDR] = "Broad Addr",
+    [TAG_DO_MASK_DISC] = "Do Mask Disc",
+    [TAG_SUPPLY_MASK] = "Supply Mask",
+    [TAG_DO_RDISC] = "Do Rdisc",
+    [TAG_RTR_SOL_ADDR] = "Rtr Sol Addr",
+    [TAG_STATIC_ROUTE] = "Static Route",
+    [TAG_USE_TRAILERS] = "Use Trailers",
+    [TAG_ARP_TIMEOUT] = "ARP Timeout",
+    [TAG_ETH_ENCAP] = "Eth Encap",
+    [TAG_TCP_TTL] = "TCP TTL",
+    [TAG_TCP_KEEPALIVE] = "TCP Keepalive",
+    [TAG_KEEPALIVE_GO] = "Keepalive Go",
+    [TAG_NIS_DOMAIN] = "NIS Domain",
+    [TAG_NIS_SERVERS] = "NIS Servers",
+    [TAG_NTP_SERVERS] = "NTP Servers",
+    [TAG_VENDOR_OPTS] = "Vendor Opts",
+    [TAG_NETBIOS_NS] = "Netbios NS",
+    [TAG_NETBIOS_DDS] = "Netbios DDS",
+    [TAG_NETBIOS_NODE] = "Netbios Node",
+    [TAG_NETBIOS_SCOPE] = "Netbios Scope",
+    [TAG_XWIN_FS] = "Xwin FS",
+    [TAG_XWIN_DM] = "Xwin DM",
+    [TAG_NIS_P_DOMAIN] = "NIS P Domain",
+    [TAG_NIS_P_SERVERS] = "NIS P Servers",
+    [TAG_MOBILE_HOME] = "Mobile Home",
+    [TAG_SMPT_SERVER] = "SMTP Server",
+    [TAG_POP3_SERVER] = "POP3 Server",
+    [TAG_NNTP_SERVER] = "NNTP Server",
+    [TAG_WWW_SERVER] = "WWW Server",
+    [TAG_FINGER_SERVER] = "Finger Server",
+    [TAG_IRC_SERVER] = "IRC Server",
+    [TAG_STREETTALK_SRVR] = "Streettalk Server",
+    [TAG_STREETTALK_STDA] = "Streettalk Stda",
+    // DHCP Options
+    [TAG_REQUESTED_IP] = "Requested IP",
+    [TAG_IP_LEASE] = "IP Lease",
+    [TAG_OPT_OVERLOAD] = "Opt Overload",
+    [TAG_TFTP_SERVER] = "TFTP Server",
+    [TAG_BOOTFILENAME] = "Bootfilename",
+    [TAG_DHCP_MESSAGE] = "DHCP Message",
+    [TAG_SERVER_ID] = "Server ID",
+    [TAG_PARM_REQUEST] = "Parm Request",
+    [TAG_MESSAGE] = "Message",
+    [TAG_MAX_MSG_SIZE] = "Max Msg Size",
+    [TAG_RENEWAL_TIME] = "Renewal Time",
+    [TAG_REBIND_TIME] = "Rebind Time",
+    [TAG_VENDOR_CLASS] = "Vendor Class",
+    [TAG_CLIENT_ID] = "Client ID",
+};
+
+static inline void bootp_tag_display(uint8_t tag, uint8_t len, u_char *value, int __tabs)
+{
+    switch (tag)
+    {
+    case TAG_DHCP_MESSAGE:
+    {
+        spprintf(true, true, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
+                 BOOTP_DHCP_MESSAGE_MAP[value[0]] ? BOOTP_DHCP_MESSAGE_MAP[value[0]] : "Unknown");
+        break;
+    }
+    case TAG_DOMAIN_SERVER:
+    {
+        int size = len / 4;
+        struct in_addr *addr = (struct in_addr *)value;
+        for (int i = 0; i < size; i++)
+            spprintf(true, size - 1 == i ? true : false, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(addr[i]));
+        break;
+    }
+    case TAG_CLIENT_ID: // TYPE:VENDOR...
+    {
+        spprintf(true, false, " Type: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
+                 BOOTP_CLIENT_ID_TYPE_MAP[value[0]] ? BOOTP_CLIENT_ID_TYPE_MAP[value[0]] : "Unknown");
+        switch (value[0])
+        {
+        case BOOTP_CLIENT_ID_TYPE_ASCII:
+            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, value + 1);
+            break;
+        case BOOTP_CLIENT_ID_TYPE_HEX:
+        {
+            char hex_value[len * 3 + 1];
+            memset(hex_value, 0, len * 3 + 1);
+            for (int i = 0; i < len - 1; i++)
+                if (i == len - 2)
+                    sprintf(hex_value + i * 3, "%02x", value[i + 1]);
+                else
+                    sprintf(hex_value + i * 3, "%02x:", value[i + 1]);
+            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, hex_value);
+            break;
+        }
+        case BOOTP_CLIENT_ID_TYPE_MAC:
+            spprintf(true, true, " Value: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 3, value[1], value[2], value[3],
+                     value[4], value[5], value[6]);
+            break;
+        }
+        break;
+    }
+    case TAG_REQUESTED_IP:
+    {
+        spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
+        break;
+    }
+    case TAG_PARM_REQUEST:
+    {
+        int size = len;
+        for (int i = 0; i < size; i++)
+            spprintf(true, size - 1 == i ? true : false, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[i],
+                     BOOTP_TAG_MAP[value[i]] ? BOOTP_TAG_MAP[value[i]] : "Unknown");
+        break;
+    }
+    case TAG_MAX_MSG_SIZE:
+    {
+        spprintf(true, true, " Value: %d\n", __tabs + 2, __tabs + 3, ntohs(*(uint16_t *)value));
+        break;
+    }
+    // and so on...
+    default:
+    {
+        char hex_value[len * 2 + 1];
+        memset(hex_value, 0, len * 2 + 1);
+        for (int i = 0; i < len; i++)
+            sprintf(hex_value + i * 2, "%02x", value[i]);
+        spprintf(true, true, " Value: 0x%s\n", __tabs + 2, __tabs + 3, hex_value);
+    }
+    }
+}

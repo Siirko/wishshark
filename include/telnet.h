@@ -148,5 +148,7 @@
     X(PRAGMA_HEARTBEAT, "PRAGMA_HEARTBEAT")
 
 #define X(code, name) [code] = name,
+#pragma GCC diagnostic ignored "-Wunused-variable"
 static const char *TELNET_MAP[] = {TELNET_COMMANDS};
+#pragma GCC diagnostic pop
 #undef X

@@ -56,6 +56,13 @@ struct __attribute__((__packed__)) dnssoa
 #define DNS_TYPE_TXT 16
 #define DNS_TYPE_AAAA 28
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+static const char *DNS_TYPE_MAP[] = {
+    [DNS_TYPE_A] = "A",     [DNS_TYPE_NS] = "NS",   [DNS_TYPE_CNAME] = "CNAME", [DNS_TYPE_SOA] = "SOA",
+    [DNS_TYPE_PTR] = "PTR", [DNS_TYPE_TXT] = "TXT", [DNS_TYPE_AAAA] = "AAAA",
+};
+#pragma GCC diagnostic pop
+
 static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
 {
     uint16_t label = ntohs(*(uint16_t *)answer);
@@ -71,5 +78,55 @@ static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
         memcpy(dst, answer + 1, label_len);
         dst[label_len] = '.';
         dns_unpack(dns_header, dst + label_len + 1, answer + label_len + 1);
+    }
+}
+
+static inline void dns_show_type(u_char *rdata, uint16_t type, struct dnshdr *dns_header, struct dnsanswer *dnsanswer,
+                                 int __tabs)
+{
+    switch (type)
+    {
+    case DNS_TYPE_A:
+        spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3, inet_ntoa(*(struct in_addr *)rdata));
+        break;
+    case DNS_TYPE_AAAA:
+        spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3,
+                 inet_ntop(AF_INET6, rdata, (char[INET6_ADDRSTRLEN]){0}, INET6_ADDRSTRLEN));
+        break;
+    case DNS_TYPE_SOA:
+    {
+        u_char primary_ns[DNS_NAME_MAX_LEN] = {0};
+        u_char mailbox[DNS_NAME_MAX_LEN] = {0};
+
+        dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer));
+
+        uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
+        uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
+        dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding);
+        size_t mailbox_len = strlen((char *)mailbox);
+
+        struct dnssoa *dnssoa =
+            (struct dnssoa *)((char *)dnsanswer + sizeof(*dnsanswer) + padding + 2 + (padding != 2 ? mailbox_len : 0));
+        spprintf(true, false, " Primary NS: %s\n", __tabs + 3, __tabs + 3, primary_ns);
+        spprintf(true, false, " Mailbox: %s\n", __tabs + 3, __tabs + 3, mailbox);
+        spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
+        spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->refresh_interval));
+        spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->retry_interval));
+        spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->expire_limit));
+        spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->minimum_ttl));
+
+        break;
+    }
+    // and so on ...
+    default:
+    {
+        if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
+        {
+            u_char name[DNS_NAME_MAX_LEN] = {0};
+            dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer));
+            spprintf(true, true, " Name: %s\n", __tabs + 3, __tabs + 3, name);
+        }
+        break;
+    }
     }
 }

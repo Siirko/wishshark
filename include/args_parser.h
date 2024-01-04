@@ -4,14 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-/**
- * @defgroup ParsingModule
- * @{
- * @brief Parse argments from command line using argp
- * @note Reference:
- * https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.html
- */
-
 const char *argp_program_version = "1.0";
 
 /* Program documentation. */
@@ -23,7 +15,6 @@ static struct argp_option options[] = {
     {"file", 'o', "PCAP_FILE", 0, "PCAP file for offline analysis", 0},
     {"verbosity", 'v', "<1..3>", 0, "Verbosity : 1 = Concise, 2 = Verbose, 3 = Complete", 0},
     {0}};
-
 
 /* Used by main to communicate with parse_opt. */
 typedef struct arguments
@@ -73,4 +64,3 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 
 /* Our argp parser. */
 static struct argp argp = {options, parse_opt, NULL, doc, NULL, NULL, NULL};
-/** @} */

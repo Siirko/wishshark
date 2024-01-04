@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "*.tsx": "typescriptreact",
+        "*.y": "yacc",
         "*.yml": "jinja-yaml",
         "show.h": "c",
         "ip.h": "c",
@@ -28,6 +30,9 @@
         "show_helper.h": "c",
         "typeinfo": "c",
         "string.h": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "initializer_list": "c",
+        "bootp.h": "c",
+        "protocol_map.h": "c"
     },
 }

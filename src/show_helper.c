@@ -1,10 +1,11 @@
 #include "../include/show_helper.h"
 #include "../include/ansi_color.h"
 #include "../include/bootp.h"
-#include "../include/cprintf.h"
 #include "../include/protocol_map.h"
+#include "../include/telnet.h"
 #include <stdarg.h>
 #include <stdlib.h>
+
 void sh_bootp_vendor(struct bootp *bootp_header, int __tabs)
 {
     uint8_t *vend_ptr = bootp_header->bp_vend;
@@ -41,79 +42,7 @@ void sh_bootp_vendor(struct bootp *bootp_header, int __tabs)
             spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
             continue;
         }
-        switch (tag)
-        {
-        case TAG_DHCP_MESSAGE:
-        {
-            spprintf(true, true, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
-                     BOOTP_DHCP_MESSAGE_MAP[value[0]] ? BOOTP_DHCP_MESSAGE_MAP[value[0]] : "Unknown");
-            break;
-        }
-        case TAG_DOMAIN_SERVER:
-        {
-            int size = len / 4;
-            struct in_addr *addr = (struct in_addr *)value;
-            for (int i = 0; i < size; i++)
-                spprintf(true, size - 1 == i ? true : false, " Value: %s\n", __tabs + 2, __tabs + 3,
-                         inet_ntoa(addr[i]));
-            break;
-        }
-        case TAG_CLIENT_ID: // TYPE:VENDOR...
-        {
-            spprintf(true, false, " Type: %d (%s)\n", __tabs + 2, __tabs + 3, value[0],
-                     BOOTP_CLIENT_ID_TYPE_MAP[value[0]] ? BOOTP_CLIENT_ID_TYPE_MAP[value[0]] : "Unknown");
-            switch (value[0])
-            {
-            case BOOTP_CLIENT_ID_TYPE_ASCII:
-                spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, value + 1);
-                break;
-            case BOOTP_CLIENT_ID_TYPE_HEX:
-            {
-                char hex_value[len * 3 + 1];
-                memset(hex_value, 0, len * 3 + 1);
-                for (int i = 0; i < len - 1; i++)
-                    if (i == len - 2)
-                        sprintf(hex_value + i * 3, "%02x", value[i + 1]);
-                    else
-                        sprintf(hex_value + i * 3, "%02x:", value[i + 1]);
-                spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, hex_value);
-                break;
-            }
-            case BOOTP_CLIENT_ID_TYPE_MAC:
-                spprintf(true, true, " Value: %x:%x:%x:%x:%x:%x\n", __tabs + 2, __tabs + 3, value[1], value[2],
-                         value[3], value[4], value[5], value[6]);
-                break;
-            }
-            break;
-        }
-        case TAG_REQUESTED_IP:
-        {
-            spprintf(true, true, " Value: %s\n", __tabs + 2, __tabs + 3, inet_ntoa(*(struct in_addr *)value));
-            break;
-        }
-        case TAG_PARM_REQUEST:
-        {
-            int size = len;
-            for (int i = 0; i < size; i++)
-                spprintf(true, size - 1 == i ? true : false, " Value: %d (%s)\n", __tabs + 2, __tabs + 3, value[i],
-                         BOOTP_TAG_MAP[value[i]] ? BOOTP_TAG_MAP[value[i]] : "Unknown");
-            break;
-        }
-        case TAG_MAX_MSG_SIZE:
-        {
-            spprintf(true, true, " Value: %d\n", __tabs + 2, __tabs + 3, ntohs(*(uint16_t *)value));
-            break;
-        }
-        // and so on...
-        default:
-        {
-            char hex_value[len * 2 + 1];
-            memset(hex_value, 0, len * 2 + 1);
-            for (int i = 0; i < len; i++)
-                sprintf(hex_value + i * 2, "%02x", value[i]);
-            spprintf(true, true, " Value: 0x%s\n", __tabs + 2, __tabs + 3, hex_value);
-        }
-        }
+        bootp_tag_display(tag, len, value, __tabs);
     }
 }
 
@@ -342,7 +271,41 @@ void sh_ipv6_header(struct ip6_hdr *ip6_header, int __tabs)
     }
 }
 
-void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnshdr *dns_header, int __tabs);
+void sh_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnshdr *dns_header, int __tabs)
+{
+    char *answer = (char *)dnsquery + sizeof(struct dnsquery);
+    for (uint16_t i = 0; i < n_answer; i++)
+    {
+
+        u_char dns_name[DNS_NAME_MAX_LEN] = {0};
+        dns_unpack((char *)dns_header, dns_name, answer);
+        // size_t dns_name_len = strlen((char *)dns_name);
+
+        uint16_t label = ntohs(*(uint16_t *)answer);
+        uint8_t padding = DNS_IS_COMPRESSED(label) ? 0 : ((label >> 8) + 1);
+
+        struct dnsanswer *dnsanswer = (struct dnsanswer *)(answer + padding);
+        uint16_t type = ntohs(dnsanswer->query.type);
+        uint16_t class = ntohs(dnsanswer->query.class);
+        uint32_t ttl = ntohl(dnsanswer->ttl);
+        uint16_t rdlength = ntohs(dnsanswer->rdlength);
+
+        u_char rdata[rdlength + 1];
+        memset(rdata, 0, rdlength + 1);
+        memcpy(rdata, (char *)dnsanswer + sizeof(*dnsanswer), rdlength);
+
+        spprintf(true, true, BBLU " DNS Answer %d\n" CRESET, __tabs + 3, __tabs + 2, i + 1);
+        spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dns_name);
+        spprintf(true, false, " Type: %ld\n", __tabs + 3, __tabs + 3, type);
+        spprintf(true, false, " Class: %ld\n", __tabs + 3, __tabs + 3, class);
+        spprintf(true, false, " TTL: %ds\n", __tabs + 3, __tabs + 3, ttl);
+        spprintf(true, false, " RDLength: %ld\n", __tabs + 3, __tabs + 3, rdlength);
+
+        dns_show_type(rdata, type, dns_header, dnsanswer, __tabs);
+
+        answer += sizeof(*dnsanswer) + rdlength + padding;
+    }
+}
 
 void sh_dns_header(struct dnshdr *dns_header, int __tabs)
 {
@@ -376,90 +339,10 @@ void sh_dns_header(struct dnshdr *dns_header, int __tabs)
         free(query_name);
 
         if (n_answer > 0 && verbose_level == COMPLETE)
-            printf_dns_answer(dnsquery, n_answer, dns_header, __tabs);
+            sh_dns_answer(dnsquery, n_answer, dns_header, __tabs);
     }
     else if (verbose_level == CONCISE)
         printf(BBLU " DNS " CRESET);
-}
-
-void printf_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnshdr *dns_header, int __tabs)
-{
-    char *answer = (char *)dnsquery + sizeof(struct dnsquery);
-    for (uint16_t i = 0; i < n_answer; i++)
-    {
-
-        u_char dns_name[DNS_NAME_MAX_LEN] = {0};
-        dns_unpack((char *)dns_header, dns_name, answer);
-        // size_t dns_name_len = strlen((char *)dns_name);
-
-        uint16_t label = ntohs(*(uint16_t *)answer);
-        uint8_t padding = DNS_IS_COMPRESSED(label) ? 0 : ((label >> 8) + 1);
-
-        struct dnsanswer *dnsanswer = (struct dnsanswer *)(answer + padding);
-        uint16_t type = ntohs(dnsanswer->query.type);
-        uint16_t class = ntohs(dnsanswer->query.class);
-        uint32_t ttl = ntohl(dnsanswer->ttl);
-        uint16_t rdlength = ntohs(dnsanswer->rdlength);
-
-        u_char rdata[rdlength + 1];
-        memset(rdata, 0, rdlength + 1);
-        memcpy(rdata, (char *)dnsanswer + sizeof(*dnsanswer), rdlength);
-
-        spprintf(true, true, BBLU " DNS Answer %d\n" CRESET, __tabs + 3, __tabs + 2, i + 1);
-        spprintf(true, false, " Name: %s\n", __tabs + 3, __tabs + 3, dns_name);
-        spprintf(true, false, " Type: %ld\n", __tabs + 3, __tabs + 3, type);
-        spprintf(true, false, " Class: %ld\n", __tabs + 3, __tabs + 3, class);
-        spprintf(true, false, " TTL: %ds\n", __tabs + 3, __tabs + 3, ttl);
-        spprintf(true, false, " RDLength: %ld\n", __tabs + 3, __tabs + 3, rdlength);
-
-        switch (type)
-        {
-        case DNS_TYPE_A:
-            spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3, inet_ntoa(*(struct in_addr *)rdata));
-            break;
-        case DNS_TYPE_AAAA:
-            spprintf(true, true, " Address: %s\n", __tabs + 3, __tabs + 3,
-                     inet_ntop(AF_INET6, rdata, (char[INET6_ADDRSTRLEN]){0}, INET6_ADDRSTRLEN));
-            break;
-        case DNS_TYPE_SOA:
-        {
-            u_char primary_ns[DNS_NAME_MAX_LEN] = {0};
-            u_char mailbox[DNS_NAME_MAX_LEN] = {0};
-
-            dns_unpack((char *)dns_header, primary_ns, (char *)dnsanswer + sizeof(*dnsanswer));
-
-            uint16_t label = ntohs(*(uint16_t *)((char *)dnsanswer + sizeof(*dnsanswer)));
-            uint8_t padding = DNS_IS_COMPRESSED(label) ? 2 : ((label >> 8) + 2);
-            dns_unpack((char *)dns_header, mailbox, (char *)dnsanswer + sizeof(*dnsanswer) + padding);
-            size_t mailbox_len = strlen((char *)mailbox);
-
-            struct dnssoa *dnssoa = (struct dnssoa *)((char *)dnsanswer + sizeof(*dnsanswer) + padding + 2 +
-                                                      (padding != 2 ? mailbox_len : 0));
-            spprintf(true, false, " Primary NS: %s\n", __tabs + 3, __tabs + 3, primary_ns);
-            spprintf(true, false, " Mailbox: %s\n", __tabs + 3, __tabs + 3, mailbox);
-            spprintf(true, false, " Serial Number: %x\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->serial));
-            spprintf(true, false, " Refresh Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->refresh_interval));
-            spprintf(true, false, " Retry Interval: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->retry_interval));
-            spprintf(true, false, " Expiration Limit: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->expire_limit));
-            spprintf(true, true, " Minimum TTL: %d\n", __tabs + 3, __tabs + 3, ntohl(dnssoa->minimum_ttl));
-
-            break;
-        }
-        // and so on ...
-        default:
-        {
-            if (type == DNS_TYPE_TXT || type == DNS_TYPE_CNAME || type == DNS_TYPE_NS || type == DNS_TYPE_PTR)
-            {
-                u_char name[DNS_NAME_MAX_LEN] = {0};
-                dns_unpack((char *)dns_header, name, (char *)dnsanswer + sizeof(*dnsanswer));
-                spprintf(true, true, " Name: %s\n", __tabs + 3, __tabs + 3, name);
-            }
-            break;
-        }
-        }
-
-        answer += sizeof(*dnsanswer) + rdlength + padding;
-    }
 }
 
 void sh_icmp_header(struct icmphdr *icmp_header, int __tabs)
@@ -508,5 +391,63 @@ void sh_icmp_header(struct icmphdr *icmp_header, int __tabs)
         }
 
         break;
+    }
+}
+
+void sh_telnet(const u_char *packet_body, uint16_t tcp_payload_size, uint32_t header_len, int __tabs)
+{
+    u_char payload[tcp_payload_size];
+    memset(payload, 0, tcp_payload_size);
+    memcpy(payload, packet_body + header_len - tcp_payload_size, tcp_payload_size);
+    for (size_t i = 0; i < tcp_payload_size; i++)
+    {
+        if (payload[i] == IAC)
+        {
+            const char *cmd;
+            const char *opt;
+            /// for cmd
+            if (i + 1 < tcp_payload_size)
+            {
+                cmd = TELNET_MAP[payload[i + 1]];
+                if (payload[i + 1] == SE)
+                {
+                    spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd);
+                    continue;
+                }
+            }
+            /// for opt
+            if (i + 2 < tcp_payload_size)
+            {
+                opt = TELNET_MAP[payload[i + 2]];
+                if (payload[i + 1] == SB && opt)
+                {
+                    spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd, opt);
+                    i += 2;
+                    u_char buf[BUF_SUBOPT] = {0};
+                    int j = 0;
+                    for (++i; i < tcp_payload_size && (payload[i] != IAC && payload[i + 1] != SE); i++, j++)
+                        sprintf((char *)buf + j * 2, "%02X", payload[i]);
+                    if (j > BUF_SUBOPT)
+                        buf[BUF_SUBOPT - 1] = '\0';
+                    if (j > 0 && verbose_level == COMPLETE)
+                        spprintf(true, true, " Option data : %s\n", __tabs + 2, __tabs + 2, buf);
+                    spprintf(true, true, " %s\n", __tabs + 2, __tabs + 2, "SE");
+                }
+                else if (cmd && opt)
+                {
+                    spprintf(true, true, " %s : %s\n", __tabs + 2, __tabs + 2, cmd, opt);
+                    i += 2;
+                }
+            }
+        }
+        else
+        {
+            u_char buf[tcp_payload_size];
+            memset(buf, 0, tcp_payload_size);
+            for (; i < tcp_payload_size && payload[i] != IAC; i++)
+                buf[i] = isprint(payload[i]) ? payload[i] : '.';
+            buf[i] = '\0';
+            spprintf(true, true, " data: %s\n", __tabs + 2, __tabs + 2, buf);
+        }
     }
 }
