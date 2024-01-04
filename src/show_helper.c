@@ -302,6 +302,8 @@ void sh_dns_header(struct dnshdr *dns_header, int __tabs)
         int query_name_len = asprintf((char **)&query_name, "%s", query);
         nprint2print(query_name_len, query_name);
 
+        // According to https://serverfault.com/questions/742785/multi-query-multiple-dns-record-types-at-once
+        // Multiple query is allowed in protocol but practically not supported, so we will only have one query
         struct dnsquery *dnsquery =
             (struct dnsquery *)((char *)dns_header + sizeof(struct dnshdr) + query_name_len + 2);
         spprintf(true, false, " Query: %s\n", __tabs + 2, __tabs + 2, query_name);
