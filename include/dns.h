@@ -81,7 +81,7 @@ static inline void dns_unpack(const char *dns_header, u_char *dst, char *answer)
     }
 }
 
-static inline void dns_show_type(u_char *rdata, uint16_t type, struct dnshdr *dns_header, struct dnsanswer *dnsanswer,
+static inline void dns_type_show(u_char *rdata, uint16_t type, struct dnshdr *dns_header, struct dnsanswer *dnsanswer,
                                  int __tabs)
 {
     switch (type)

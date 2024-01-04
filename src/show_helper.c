@@ -272,7 +272,7 @@ void sh_dns_answer(struct dnsquery *dnsquery, uint16_t n_answer, struct dnshdr *
         spprintf(true, false, " TTL: %ds\n", __tabs + 3, __tabs + 3, ttl);
         spprintf(true, false, " RDLength: %ld\n", __tabs + 3, __tabs + 3, rdlength);
 
-        dns_show_type(rdata, type, dns_header, dnsanswer, __tabs);
+        dns_type_show(rdata, type, dns_header, dnsanswer, __tabs);
 
         answer += sizeof(*dnsanswer) + rdlength + padding;
     }
