@@ -56,7 +56,7 @@ pcap_t *open_pcap_handle_offline(char *filename)
 }
 
 // optional
-void apply_filter(char *filter_exp, pcap_t *handler, bpf_u_int32 net)
+void set_pcap_filter(char *filter_exp, pcap_t *handler, bpf_u_int32 net)
 {
     struct bpf_program fp;
     if (pcap_compile(handler, &fp, filter_exp, 0, net) == -1)

@@ -19,6 +19,7 @@ void initiate_args(int argc, char *argv[])
     arguments.verbose_level = 3;
     arguments.interface = "";
     arguments.input_file = "";
+    arguments.filter = "";
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
     verbose_level = arguments.verbose_level;
 }
@@ -38,6 +39,9 @@ int main(int argc, char **argv)
         handle = open_pcap_handle_offline(arguments.input_file);
     else if (strcmp(arguments.interface, "") != 0 && strcmp(arguments.input_file, "") == 0)
         handle = open_pcap_handle(arguments.interface);
+
+    if (strcmp(arguments.filter, "") != 0)
+        set_pcap_filter(arguments.filter, handle, net);
 
     CHK_PCAP(pcap_loop(handle, -1, packet_handler_callback, NULL), handle);
     pcap_close(handle);

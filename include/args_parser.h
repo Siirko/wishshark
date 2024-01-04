@@ -14,6 +14,8 @@ static struct argp_option options[] = {
     {"interface", 'i', "INTERFACE", 0, "Interface for live analysis", 0},
     {"file", 'o', "PCAP_FILE", 0, "PCAP file for offline analysis", 0},
     {"verbosity", 'v', "<1..3>", 0, "Verbosity : 1 = Concise, 2 = Verbose, 3 = Complete", 0},
+    {"filter", 'f', "FILTER", 0,
+     "Filter to apply to the analysis (check https://www.tcpdump.org/manpages/pcap-filter.7.html)", 0},
     {0}};
 
 /* Used by main to communicate with parse_opt. */
@@ -22,6 +24,7 @@ typedef struct arguments
     // char *args[2];                /* arg1 & arg2 */
     char *interface;
     char *input_file;
+    char *filter;
     enum VerboseLevel verbose_level;
 } arguments_t;
 
@@ -54,6 +57,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
             deprintf("Invalid verbose level: %d\n", arguments->verbose_level);
             argp_usage(state);
         }
+        break;
+    case 'f':
+        arguments->filter = arg;
         break;
     default:
         return ARGP_ERR_UNKNOWN;
