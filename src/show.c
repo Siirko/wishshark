@@ -129,6 +129,8 @@ void s_bootp_packet(const tshow_t packet, int __tabs)
     struct bootp *bootp_header =
         (struct bootp *)(packet.packet_body + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
     sh_bootp_header(bootp_header, __tabs);
+    if (verbose_level == CONCISE)
+        return;
     sh_bootp_vendor(bootp_header, __tabs);
 }
 
@@ -165,9 +167,12 @@ void s_telnet_packet(const tshow_t packet, int __tabs)
     size_t tcp_payload_size = tcp_payload_len(packet);
     if (tcp_payload_size > 0)
     {
-        spprintf(true, true, BWHT " TELNET\n" CRESET, __tabs + 1, __tabs + 2);
         if (verbose_level == CONCISE)
+        {
+            printf(BWHT " TELNET" CRESET);
             return;
+        }
+        spprintf(true, true, BWHT " TELNET\n" CRESET, __tabs + 1, __tabs + 2);
         sh_telnet(packet_body, tcp_payload_size, packet.packet_header->len, __tabs);
     }
 }
